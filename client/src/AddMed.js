@@ -1,23 +1,42 @@
-import React, { useState, useEffect } from 'react'
-import { useHistory } from "react-router-dom"
+import React, { useState, useEffect } from 'react';
+import { useHistory } from "react-router-dom";
 import Web3 from "web3";
-import SupplyChainABI from "./artifacts/SupplyChain.json"
+import Select from 'react-select';
+import SupplyChainABI from "./artifacts/SupplyChain.json";
 
 function AddMed() {
-    const history = useHistory()
+    const history = useHistory();
     useEffect(() => {
         loadWeb3();
         loadBlockchaindata();
-    }, [])
+    }, []);
 
     const [currentaccount, setCurrentaccount] = useState("");
     const [loader, setloader] = useState(true);
     const [SupplyChain, setSupplyChain] = useState();
     const [MED, setMED] = useState();
-    const [MedName, setMedName] = useState();
-    const [MedDes, setMedDes] = useState();
+    const [MedName, setMedName] = useState("");
+    const [MedDes, setMedDes] = useState("");
     const [MedStage, setMedStage] = useState();
+    const [MedID, setMedID] = useState("");
 
+    const medicineData = {
+        Aspirin: { id: 'A278593', description: 'Pain Reliever' },
+        Arvales: { id: 'A394857', description: 'Pain Reliever' },
+        Parol: { id: 'P394857', description: 'Pain Reliever' },
+        Augmentin: { id: 'B123456', description: 'Antibiotic' },
+        Vermidon: { id: 'V654321', description: 'Pain Reliever' },
+        Majezik: { id: 'M789012', description: 'Pain Reliever' },
+        Dolorex: { id: 'D345678', description: 'Pain Reliever' },
+        Aprol: { id: 'A456789', description: 'Pain Reliever' },
+        Dikloron: { id: 'D567890', description: 'Pain Reliever' },
+        Cipralex: { id: 'C678901', description: 'Antidepressant' }
+    };
+
+    const options = Object.keys(medicineData).map(name => ({
+        value: name,
+        label: name,
+    }));
 
     const loadWeb3 = async () => {
         if (window.ethereum) {
@@ -54,28 +73,29 @@ function AddMed() {
             setMED(med);
             setMedStage(medStage);
             setloader(false);
+        } else {
+            window.alert('The smart contract is not deployed to current network');
         }
-        else {
-            window.alert('The smart contract is not deployed to current network')
-        }
-    }
+    };
     if (loader) {
         return (
             <div>
                 <h1 className="wait">Loading...</h1>
             </div>
-        )
+        );
 
     }
     const redirect_to_home = () => {
-        history.push('/')
-    }
-    const handlerChangeNameMED = (event) => {
-        setMedName(event.target.value);
-    }
-    const handlerChangeDesMED = (event) => {
-        setMedDes(event.target.value);
-    }
+        history.push('/');
+    };
+
+    const handleChange = (selectedOption) => {
+        const selectedMedName = selectedOption.value;
+        setMedName(selectedMedName);
+        setMedID(medicineData[selectedMedName]?.id || "");
+        setMedDes(medicineData[selectedMedName]?.description || "");
+    };
+
     const handlerSubmitMED = async (event) => {
         event.preventDefault();
         try {
@@ -83,11 +103,11 @@ function AddMed() {
             if (reciept) {
                 loadBlockchaindata();
             }
+        } catch (err) {
+            alert("An error occured!!!");
         }
-        catch (err) {
-            alert("An error occured!!!")
-        }
-    }
+    };
+
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -98,10 +118,19 @@ function AddMed() {
             <h4>Add Medicine Order:</h4>
             <form onSubmit={handlerSubmitMED} className="mb-4">
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeNameMED} placeholder="Medicine Name" required />
+                    <Select
+                        value={options.find(option => option.value === MedName)}
+                        onChange={handleChange}
+                        options={options}
+                        placeholder="Select Medicine"
+                        isClearable
+                    />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeDesMED} placeholder="Medicine Description" required />
+                    <input className="form-control" type="text" value={MedDes} placeholder="Medicine Description" readOnly />
+                </div>
+                <div className="mb-3">
+                    <input className="form-control" type="text" value={MedID} placeholder="Medicine ID" readOnly />
                 </div>
                 <button className="btn btn-outline-success btn-sm" type="submit">Order</button>
             </form>
@@ -119,7 +148,7 @@ function AddMed() {
                 <tbody>
                     {Object.keys(MED).map(key => (
                         <tr key={key}>
-                            <td>{MED[key].id}</td>
+                            <td>{medicineData[MED[key].name]?.id || MED[key].id}</td>
                             <td>{MED[key].name}</td>
                             <td>{MED[key].description}</td>
                             <td>{MedStage[key]}</td>
@@ -131,4 +160,4 @@ function AddMed() {
     );
 }
 
-export default AddMed
+export default AddMed;
