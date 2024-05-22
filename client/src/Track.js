@@ -26,6 +26,10 @@ function Track() {
     const [TrackTillManufacture, showTrackTillManufacture] = useState(false);
     const [TrackTillRMS, showTrackTillRMS] = useState(false);
     const [TrackTillOrdered, showTrackTillOrdered] = useState(false);
+    const [filterID, setFilterID] = useState("");
+    const [filterName, setFilterName] = useState("");
+    const [filterDescription, setFilterDescription] = useState("");
+    const [filterStage, setFilterStage] = useState("");
 
     const loadWeb3 = async () => {
         if (window.ethereum) {
@@ -395,6 +399,17 @@ function Track() {
 
         }
     }
+    
+    const filteredMED = Object.keys(MED).filter(key => {
+        const med = MED[key];
+        return (
+            (filterID === "" || med.id.toLowerCase().includes(filterID.toLowerCase())) &&
+            (filterName === "" || med.name.toLowerCase().includes(filterName.toLowerCase())) &&
+            (filterDescription === "" || med.description.toLowerCase().includes(filterDescription.toLowerCase())) &&
+            (filterStage === "" || MedStage[key].toLowerCase().includes(filterStage.toLowerCase()))
+        );
+    });
+    
 
     return (
         <div className="container mt-4">
@@ -406,14 +421,50 @@ function Track() {
             <table className="table table-sm table-bordered mb-4">
                 <thead className="table-dark">
                     <tr>
-                        <th scope="col">Medicine ID</th>
-                        <th scope="col">Name</th>
-                        <th scope="col">Description</th>
-                        <th scope="col">Current Processing Stage</th>
+                        <th scope="col">
+                            Medicine ID
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter ID"
+                                value={filterID}
+                                onChange={(e) => setFilterID(e.target.value)}
+                            />
+                        </th>
+                        <th scope="col">
+                            Name
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Name"
+                                value={filterName}
+                                onChange={(e) => setFilterName(e.target.value)}
+                            />
+                        </th>
+                        <th scope="col">
+                            Description
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Description"
+                                value={filterDescription}
+                                onChange={(e) => setFilterDescription(e.target.value)}
+                            />
+                        </th>
+                        <th scope="col">
+                            Current Processing Stage
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Stage"
+                                value={filterStage}
+                                onChange={(e) => setFilterStage(e.target.value)}
+                            />
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    {Object.keys(MED).map(key => (
+                    {filteredMED.map(key => (
                         <tr key={key}>
                             <td>{MED[key].id}</td>
                             <td>{MED[key].name}</td>
