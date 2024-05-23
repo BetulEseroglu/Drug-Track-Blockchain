@@ -4,6 +4,54 @@ import SupplyChainABI from './artifacts/SupplyChain.json';
 import { useHistory } from 'react-router-dom';
 import QRCodeGenerator from './QRCodeGenerator';
 
+export function useManufacturers() {
+    const [manufacturers, setManufacturers] = useState([]);
+
+    useEffect(() => {
+        const loadManufacturers = async () => {
+            const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
+            const networkId = await web3.eth.net.getId();
+            const networkData = SupplyChainABI.networks[networkId];
+            if (networkData) {
+                const supplyChain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
+                const manCtr = await supplyChain.methods.manCtr().call();
+                const man = [];
+                for (let i = 0; i < manCtr; i++) {
+                    const manufacturer = await supplyChain.methods.MAN(i + 1).call();
+                    man.push(manufacturer);
+                }
+                setManufacturers(man);
+            }
+        };
+        loadManufacturers();
+    }, []);
+    return manufacturers;
+}
+
+export function useRetailers() {
+    const [retailers, setRetailers] = useState([]);
+
+    useEffect(() => {
+        const loadRetailers = async () => {
+            const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
+            const networkId = await web3.eth.net.getId();
+            const networkData = SupplyChainABI.networks[networkId];
+            if (networkData) {
+                const supplyChain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
+                const retCtr = await supplyChain.methods.retCtr().call();
+                const ret = [];
+                for (let i = 0; i < retCtr; i++) {
+                    const retailer = await supplyChain.methods.RET(i + 1).call();
+                    ret.push(retailer);
+                }
+                setRetailers(ret);
+            }
+        };
+        loadRetailers();
+    }, []);
+    return retailers;
+}
+
 export function useRawMaterialSuppliers() {
     const [rawMaterialSuppliers, setRawMaterialSuppliers] = useState([]);
 

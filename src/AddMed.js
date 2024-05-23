@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import Web3 from 'web3';
 import SupplyChainABI from './artifacts/SupplyChain.json';
+import { useRetailers } from './AssignRoles'; // Perakendeci bilgilerini çekmek için import ediyoruz
+import { useManufacturers } from './AssignRoles';
 
 function AddMed() {
     const history = useHistory();
+    const retailers = useRetailers(); // Perakendeci bilgilerini çekiyoruz
+    const [selectedRetailer, setSelectedRetailer] = useState(null);
+
     useEffect(() => {
         loadWeb3();
         loadBlockchaindata();
@@ -18,10 +23,15 @@ function AddMed() {
     const [MedName, setMedName] = useState("");
     const [MedDes, setMedDes] = useState("");
     const [MedID, setMedID] = useState("");
+    const [orderQuantity, setOrderQuantity] = useState(""); // Sipariş adeti için state
+    const [errorMessage, setErrorMessage] = useState(""); // Hata mesajı için state
+    const manufacturers = useManufacturers();
+
     const [filterName, setFilterName] = useState("");
     const [filterDescription, setFilterDescription] = useState("");
     const [filterStage, setFilterStage] = useState("");
     const [filterID, setFilterID] = useState("");
+    const [filterRetailer, setFilterRetailer] = useState(""); // Perakendeci filtresi için state
 
     const medicineData = {
         Aspirin: { id: 'A278593', description: 'Pain Reliever' },
@@ -34,6 +44,11 @@ function AddMed() {
         Aprol: { id: 'A456789', description: 'Pain Reliever' },
         Dikloron: { id: 'D567890', description: 'Pain Reliever' },
         Cipralex: { id: 'C678901', description: 'Antidepressant' }
+    };
+    
+    const getStockForMedicine = (medicineName) => {
+        const manufacturer = manufacturers.find(man => man.drugName === medicineName);
+        return manufacturer ? manufacturer.stock : 0;
     };
 
     const loadWeb3 = async () => {
@@ -81,16 +96,37 @@ function AddMed() {
         setMedDes(medicineData[selectedMedName]?.description || '');
     };
 
+    const handlerChangeRetailer = (event) => {
+        const selectedRetailerName = event.target.value;
+        const retailer = retailers.find(r => r.name === selectedRetailerName);
+        setSelectedRetailer(retailer);
+    };
+
+    const handlerChangeOrderQuantity = (event) => {
+        setOrderQuantity(event.target.value);
+    };
+
     const handlerSubmitMED = async (event) => {
         event.preventDefault();
+        const stock = getStockForMedicine(MedName);
+        if (parseInt(orderQuantity) > stock) {
+            setErrorMessage('Stok yok');
+            return;
+        }
         try {
-            var reciept = await SupplyChain.methods.addMedicine(MedName, MedDes, MedID).send({ from: currentaccount });
+            var reciept = await SupplyChain.methods.addMedicine(
+                MedName, 
+                MedDes, 
+                MedID,
+                selectedRetailer.name
+            ).send({ from: currentaccount });
             if (reciept) {
                 loadBlockchaindata();
+                setErrorMessage(''); // Hata mesajını temizle
             }
         } catch (err) {
             console.error(err);
-            alert('An error occurred!!!');
+            setErrorMessage('Bir hata oluştu!!!');
         }
     };
 
@@ -111,7 +147,8 @@ function AddMed() {
         return (
             (filterName === "" || med.name.toLowerCase().includes(filterName.toLowerCase())) &&
             (filterDescription === "" || med.description.toLowerCase().includes(filterDescription.toLowerCase())) &&
-            (filterStage === "" || MedStage[key].toLowerCase().includes(filterStage.toLowerCase()))
+            (filterStage === "" || MedStage[key].toLowerCase().includes(filterStage.toLowerCase())) &&
+            (filterRetailer === "" || med.retailer.toLowerCase().includes(filterRetailer.toLowerCase()))
         );
     });
 
@@ -138,6 +175,18 @@ function AddMed() {
                 <div className="mb-3">
                     <input className="form-control" type="text" value={MedID} placeholder="Medicine ID" readOnly />
                 </div>
+                <div className="mb-3">
+                    <input className="form-control" type="number" value={orderQuantity} onChange={handlerChangeOrderQuantity} placeholder="Order Quantity" required />
+                </div>
+                <div className="mb-3">
+                    <select className="form-control" value={selectedRetailer ? selectedRetailer.name : ''} onChange={handlerChangeRetailer} required>
+                        <option value="">Select Retailer</option>
+                        {retailers.map((retailer, index) => (
+                            <option key={index} value={retailer.name}>{retailer.name}</option>
+                        ))}
+                    </select>
+                </div>
+                {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
                 <button className="btn btn-outline-success btn-sm" type="submit">Order</button>
             </form>
 
@@ -145,7 +194,7 @@ function AddMed() {
             <table className="table table-striped table-hover table-sm mb-4">
                 <thead className="table-dark">
                     <tr>
-                    <th scope="col">
+                        <th scope="col">
                             ID
                             <input
                                 type="text"
@@ -185,6 +234,16 @@ function AddMed() {
                                 onChange={(e) => setFilterStage(e.target.value)}
                             />
                         </th>
+                        <th scope="col">
+                            Retailer
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Retailer"
+                                value={filterRetailer}
+                                onChange={(e) => setFilterRetailer(e.target.value)}
+                            />
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -194,6 +253,7 @@ function AddMed() {
                             <td>{MED[key].name}</td>
                             <td>{MED[key].description}</td>
                             <td>{MedStage[key]}</td>
+                            <td>{MED[key].retailer}</td> {/* Perakendeci Bilgisi */}
                         </tr>
                     ))}
                 </tbody>
