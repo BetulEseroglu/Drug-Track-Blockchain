@@ -4,6 +4,30 @@ import SupplyChainABI from './artifacts/SupplyChain.json';
 import { useHistory } from 'react-router-dom';
 import QRCodeGenerator from './QRCodeGenerator';
 
+export function useRetailers() {
+    const [retailers, setRetailers] = useState([]);
+
+    useEffect(() => {
+        const loadRetailers = async () => {
+            const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
+            const networkId = await web3.eth.net.getId();
+            const networkData = SupplyChainABI.networks[networkId];
+            if (networkData) {
+                const supplyChain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
+                const retCtr = await supplyChain.methods.retCtr().call();
+                const ret = [];
+                for (let i = 0; i < retCtr; i++) {
+                    const retailer = await supplyChain.methods.RET(i + 1).call();
+                    ret.push(retailer);
+                }
+                setRetailers(ret);
+            }
+        };
+        loadRetailers();
+    }, []);
+    return retailers;
+}
+
 export function useRawMaterialSuppliers() {
     const [rawMaterialSuppliers, setRawMaterialSuppliers] = useState([]);
 
@@ -25,7 +49,6 @@ export function useRawMaterialSuppliers() {
         };
         loadRawMaterialSuppliers();
     }, []);
-
     return rawMaterialSuppliers;
 }
 
@@ -50,7 +73,7 @@ function AssignRoles() {
     const [qrCodeValue, setQrCodeValue] = useState('');
 
     const [rmsFilter, setRmsFilter] = useState({ id: '', name: '', place: '', addr: '' });
-    const [manFilter, setManFilter] = useState({ id: '', name: '', place: '', addr: '', drugId: '', drugName: '', drugQuantity: '', serialNumber: '' });
+    const [manFilter, setManFilter] = useState({ id: '', name: '', place: '', addr: '', drugId: '', drugName: '', serialNumber: '', drugQuantity: ''});
     const [disFilter, setDisFilter] = useState({ id: '', name: '', place: '', addr: '' });
     const [retFilter, setRetFilter] = useState({ id: '', name: '', place: '', addr: '' });
 
@@ -66,7 +89,33 @@ function AssignRoles() {
     const [RETaddress, setRETaddress] = useState('');
     const [RETname, setRETname] = useState('');
     const [RETplace, setRETplace] = useState('');
+    
+    const [MANdrugID, setMANdrugID] = useState('');
+    const [MANdrugName, setMANdrugName] = useState('');
+    const [MANdrugDescription, setMANdrugDescription] = useState("");
     const [serialNumber, setSerialNumber] = useState('');
+    const [stock, setStock] = useState('');
+
+    const medicineData = {
+        Aspirin: { id: 'A278593', description: 'Pain Reliever' },
+        Arvales: { id: 'A394857', description: 'Pain Reliever' },
+        Parol: { id: 'P394857', description: 'Pain Reliever' },
+        Augmentin: { id: 'A123456', description: 'Antibiotic' },
+        Vermidon: { id: 'V654321', description: 'Pain Reliever' },
+        Majezik: { id: 'M789012', description: 'Pain Reliever' },
+        Dolorex: { id: 'D345678', description: 'Pain Reliever' },
+        Aprol: { id: 'A456789', description: 'Pain Reliever' },
+        Dikloron: { id: 'D567890', description: 'Pain Reliever' },
+        Cipralex: { id: 'C678901', description: 'Antidepressant' }
+    };
+    
+    const handleChangeMedicine = (event) => {
+        const selectedMedicine = event.target.value;
+        setMANdrugName(selectedMedicine);
+        setMANdrugID(medicineData[selectedMedicine]?.id || '');
+        setMANdrugDescription(medicineData[selectedMedicine]?.description || '');
+    };
+    
 
     const handleRmsFilterChange = (event) => {
         const { name, value } = event.target;
@@ -102,17 +151,19 @@ function AssignRoles() {
     const filterMan = (man) => {
         return Object.keys(man).filter((key) => {
             return (
-                (manFilter.id === '' || man[key].id.toString().includes(manFilter.id)) &&
-                (manFilter.name === '' || man[key].name.toLowerCase().includes(manFilter.name.toLowerCase())) &&
-                (manFilter.place === '' || man[key].place.toLowerCase().includes(manFilter.place.toLowerCase())) &&
-                (manFilter.addr === '' || man[key].addr.toLowerCase().includes(manFilter.addr.toLowerCase())) &&
-                (manFilter.drugId === '' || man[key].drugId.toString().includes(manFilter.drugId)) &&
-                (manFilter.drugName === '' || man[key].drugName.toLowerCase().includes(manFilter.drugName.toLowerCase())) &&
-                (manFilter.drugQuantity === '' || man[key].drugQuantity.toString().includes(manFilter.drugQuantity)) &&
-                (manFilter.serialNumber === '' || man[key].serialNumber.toString().includes(manFilter.serialNumber))
+                (manFilter.id === '' || (man[key].id && man[key].id.toString().includes(manFilter.id))) &&
+                (manFilter.name === '' || (man[key].name && man[key].name.toLowerCase().includes(manFilter.name.toLowerCase()))) &&
+                (manFilter.place === '' || (man[key].place && man[key].place.toLowerCase().includes(manFilter.place.toLowerCase()))) &&
+                (manFilter.addr === '' || (man[key].addr && man[key].addr.toLowerCase().includes(manFilter.addr.toLowerCase()))) &&
+                (manFilter.drugId === '' || (man[key].drugId && man[key].drugId.toString().includes(manFilter.drugId))) &&
+                (manFilter.drugName === '' || (man[key].drugName && man[key].drugName.toLowerCase().includes(manFilter.drugName.toLowerCase()))) &&
+                (manFilter.serialNumber === '' || (man[key].serialNumber && man[key].serialNumber.toString().includes(manFilter.serialNumber))) &&
+                (manFilter.stock === '' || (man[key].stock && man[key].stock.toString().includes(manFilter.stock)))
             );
         });
     };
+    
+    
 
     const filterDis = (dis) => {
         return Object.keys(dis).filter((key) => {
@@ -158,7 +209,7 @@ function AssignRoles() {
         if (networkData) {
             const supplychain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
             setSupplyChain(supplychain);
-
+    
             // RMS Data
             const rmsCtr = await supplychain.methods.rmsCtr().call();
             const rmsCount = web3.utils.toBN(rmsCtr).toNumber();
@@ -167,7 +218,7 @@ function AssignRoles() {
                 rms[i] = await supplychain.methods.RMS(i + 1).call();
             }
             setRMS(rms);
-
+    
             // MAN Data
             const manCtr = await supplychain.methods.manCtr().call();
             const manCount = web3.utils.toBN(manCtr).toNumber();
@@ -175,12 +226,16 @@ function AssignRoles() {
             const serialNumbersSet = new Set();
             for (let i = 0; i < manCount; i++) {
                 const manufacturer = await supplychain.methods.MAN(i + 1).call();
+                const medicineName = manufacturer.drugName;
+                manufacturer.drugName = medicineName;  // Adjusting drug name
+                manufacturer.drugId = medicineData[medicineName]?.id || manufacturer.drugId;  // Adjusting drug ID
+                manufacturer.stock = manufacturer.stock || 0;  // Ensure stock is not undefined
                 man[i] = manufacturer;
                 serialNumbersSet.add(manufacturer.serialNumber);
             }
             setMAN(man);
             setSerialNumbers(serialNumbersSet);
-
+    
             // DIS Data
             const disCtr = await supplychain.methods.disCtr().call();
             const disCount = web3.utils.toBN(disCtr).toNumber();
@@ -189,7 +244,7 @@ function AssignRoles() {
                 dis[i] = await supplychain.methods.DIS(i + 1).call();
             }
             setDIS(dis);
-
+    
             // RET Data
             const retCtr = await supplychain.methods.retCtr().call();
             const retCount = web3.utils.toBN(retCtr).toNumber();
@@ -198,7 +253,7 @@ function AssignRoles() {
                 ret[i] = await supplychain.methods.RET(i + 1).call();
             }
             setRET(ret);
-
+    
             setloader(false);
         } else {
             window.alert('The smart contract is not deployed to current network');
@@ -211,19 +266,22 @@ function AssignRoles() {
 
     const handlerSubmitMAN = async (event) => {
         event.preventDefault();
-
+    
         if (serialNumbers.has(serialNumber)) {
             alert('Bu seri numarası zaten kullanılıyor. Lütfen başka bir seri numarası kullanın.');
             return;
         }
-
+    
         if (isCodeValid) {
             try {
                 const receipt = await SupplyChain.methods.addManufacturer(
                     MANaddress,
                     MANname,
                     MANplace,
-                    serialNumber
+                    MANdrugName,
+                    MANdrugID,
+                    serialNumber,
+                    stock
                 ).send({ from: currentaccount });
                 if (receipt) {
                     setSerialNumbers(new Set([...serialNumbers, serialNumber]));
@@ -236,7 +294,7 @@ function AssignRoles() {
         } else {
             alert('Lütfen doğru doğrulama kodunu girin.');
         }
-    };
+    };    
 
     const handlerSubmitRMS = async (event) => {
         event.preventDefault();
@@ -445,7 +503,29 @@ function AssignRoles() {
                     <input className="form-control" type="text" onChange={handlerChangePlaceMAN} placeholder="Konum" required />
                 </div>
                 <div className="mb-3">
+                    <select className="form-control" value={MANdrugName} onChange={(e) => {
+                        const selectedMedName = e.target.value;
+                        setMANdrugName(selectedMedName);
+                        setMANdrugID(medicineData[selectedMedName]?.id || "");
+                        setMANdrugDescription(medicineData[selectedMedName]?.description || "");
+                    }} required>
+                        <option value="">Select Medicine</option>
+                        {Object.keys(medicineData).map((name) => (
+                            <option key={name} value={name}>{name}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="mb-3">
+                    <input className="form-control" type="text" value={MANdrugDescription} placeholder="Medicine Description" readOnly />
+                </div>
+                <div className="mb-3">
+                    <input className="form-control" type="text" value={MANdrugID} placeholder="Medicine ID" readOnly />
+                </div>
+                <div className="mb-3">
                     <input className="form-control" type="text" onChange={handleSerialNumberChange} placeholder="Seri Numarası" required />
+                </div>
+                <div className="mb-3">
+                    <input className="form-control" type="number" onChange={(e) => setStock(e.target.value)} placeholder="Stok Bilgisi" required />
                 </div>
                 <div className="mb-3">
                     <button type="button" onClick={generateQRCodeValue} className="btn btn-outline-primary btn-sm">QR Kod Oluştur</button>
@@ -455,6 +535,7 @@ function AssignRoles() {
                 </div>
                 <button className="btn btn-outline-success btn-sm" type="submit" disabled={!isCodeValid}>Kayıt</button>
             </form>
+
     
             {serialNumber && verificationCode && (
                 <div>
@@ -472,8 +553,8 @@ function AssignRoles() {
                         <th scope="col">Ethereum Adresi</th>
                         <th scope="col">İlaç ID</th>
                         <th scope="col">İlaç Adı</th>
-                        <th scope="col">İlaç Miktarı</th>
                         <th scope="col">Seri Numarası</th>
+                        <th scope="col">Stok</th>
                     </tr>
                     <tr>
                         <th>
@@ -540,9 +621,9 @@ function AssignRoles() {
                             <input
                                 className="form-control form-control-sm"
                                 type="text"
-                                name="drugQuantity"
+                                name="serialNumber"
                                 placeholder="Filtre"
-                                value={manFilter.drugQuantity}
+                                value={manFilter.serialNumber}
                                 onChange={handleManFilterChange}
                             />
                         </th>
@@ -550,25 +631,25 @@ function AssignRoles() {
                             <input
                                 className="form-control form-control-sm"
                                 type="text"
-                                name="serialNumber"
+                                name="stock"
                                 placeholder="Filtre"
-                                value={manFilter.serialNumber}
+                                value={manFilter.stock}
                                 onChange={handleManFilterChange}
                             />
                         </th>
                     </tr>
                 </thead>
                 <tbody>
-                    {filterMan(MAN).map(key => (
+                    {Object.keys(MAN).map((key) => (
                         <tr key={key}>
                             <td>{MAN[key].id}</td>
                             <td>{MAN[key].name}</td>
                             <td>{MAN[key].place}</td>
                             <td>{MAN[key].addr}</td>
-                            <td>{MAN[key].drugId}</td>
+                            <td>{MAN[key].drugID}</td>
                             <td>{MAN[key].drugName}</td>
-                            <td>{MAN[key].drugQuantity}</td>
                             <td>{MAN[key].serialNumber}</td>
+                            <td>{MAN[key].stock}</td>
                         </tr>
                     ))}
                 </tbody>

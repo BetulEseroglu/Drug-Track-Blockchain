@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useHistory } from "react-router-dom";
-import Web3 from "web3";
-import SupplyChainABI from "./artifacts/SupplyChain.json";
+import { useHistory } from 'react-router-dom';
+import Web3 from 'web3';
+import SupplyChainABI from './artifacts/SupplyChain.json';
+import { useRetailers } from './AssignRoles'; // Perakendeci bilgilerini çekmek için import ediyoruz
 
 function AddMed() {
     const history = useHistory();
+    const retailers = useRetailers(); // Perakendeci bilgilerini çekiyoruz
+    const [selectedRetailer, setSelectedRetailer] = useState(null);
+
     useEffect(() => {
         loadWeb3();
         loadBlockchaindata();
@@ -22,7 +26,7 @@ function AddMed() {
     const [filterDescription, setFilterDescription] = useState("");
     const [filterStage, setFilterStage] = useState("");
     const [filterID, setFilterID] = useState("");
-
+    const [filterRetailer, setFilterRetailer] = useState(""); // Perakendeci filtresi için state
 
     const medicineData = {
         Aspirin: { id: 'A278593', description: 'Pain Reliever' },
@@ -44,7 +48,7 @@ function AddMed() {
         } else if (window.web3) {
             window.web3 = new Web3(window.web3.currentProvider);
         } else {
-            window.alert("Non-Ethereum browser detected. You should consider trying MetaMask!");
+            window.alert('Non-Ethereum browser detected. You should consider trying MetaMask!');
         }
     };
 
@@ -59,10 +63,11 @@ function AddMed() {
         if (networkData) {
             const supplychain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
             setSupplyChain(supplychain);
+            var i;
             const medCtr = await supplychain.methods.medicineCtr().call();
             const med = {};
             const medStage = [];
-            for (let i = 0; i < medCtr; i++) {
+            for (i = 0; i < medCtr; i++) {
                 med[i] = await supplychain.methods.MedicineStock(i + 1).call();
                 medStage[i] = await supplychain.methods.showStage(i + 1).call();
             }
@@ -71,6 +76,37 @@ function AddMed() {
             setloader(false);
         } else {
             window.alert('The smart contract is not deployed to current network');
+        }
+    };
+
+    const handlerChangeNameMED = (event) => {
+        const selectedMedName = event.target.value;
+        setMedName(selectedMedName);
+        setMedID(medicineData[selectedMedName]?.id || '');
+        setMedDes(medicineData[selectedMedName]?.description || '');
+    };
+
+    const handlerChangeRetailer = (event) => {
+        const selectedRetailerName = event.target.value;
+        const retailer = retailers.find(r => r.name === selectedRetailerName);
+        setSelectedRetailer(retailer);
+    };
+
+    const handlerSubmitMED = async (event) => {
+        event.preventDefault();
+        try {
+            var reciept = await SupplyChain.methods.addMedicine(
+                MedName, 
+                MedDes, 
+                MedID,
+                selectedRetailer.name 
+            ).send({ from: currentaccount });
+            if (reciept) {
+                loadBlockchaindata();
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An error occurred!!!');
         }
     };
 
@@ -86,31 +122,13 @@ function AddMed() {
         history.push('/');
     };
 
-    const handlerChangeNameMED = (event) => {
-        const selectedMedName = event.target.value;
-        setMedName(selectedMedName);
-        setMedID(medicineData[selectedMedName]?.id || "");
-        setMedDes(medicineData[selectedMedName]?.description || "");
-    };
-
-    const handlerSubmitMED = async (event) => {
-        event.preventDefault();
-        try {
-            const reciept = await SupplyChain.methods.addMedicine(MedName, MedDes).send({ from: currentaccount });
-            if (reciept) {
-                loadBlockchaindata();
-            }
-        } catch (err) {
-            alert("An error occurred!!!");
-        }
-    };
-
     const filteredMED = Object.keys(MED).filter(key => {
         const med = MED[key];
         return (
             (filterName === "" || med.name.toLowerCase().includes(filterName.toLowerCase())) &&
             (filterDescription === "" || med.description.toLowerCase().includes(filterDescription.toLowerCase())) &&
-            (filterStage === "" || MedStage[key].toLowerCase().includes(filterStage.toLowerCase()))
+            (filterStage === "" || MedStage[key].toLowerCase().includes(filterStage.toLowerCase())) &&
+            (filterRetailer === "" || med.retailer.toLowerCase().includes(filterRetailer.toLowerCase()))
         );
     });
 
@@ -136,6 +154,14 @@ function AddMed() {
                 </div>
                 <div className="mb-3">
                     <input className="form-control" type="text" value={MedID} placeholder="Medicine ID" readOnly />
+                </div>
+                <div className="mb-3">
+                    <select className="form-control" value={selectedRetailer ? selectedRetailer.name : ''} onChange={handlerChangeRetailer} required>
+                        <option value="">Select Retailer</option>
+                        {retailers.map((retailer, index) => (
+                            <option key={index} value={retailer.name}>{retailer.name}</option>
+                        ))}
+                    </select>
                 </div>
                 <button className="btn btn-outline-success btn-sm" type="submit">Order</button>
             </form>
@@ -184,15 +210,26 @@ function AddMed() {
                                 onChange={(e) => setFilterStage(e.target.value)}
                             />
                         </th>
+                        <th scope="col">
+                            Retailer
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Retailer"
+                                value={filterRetailer}
+                                onChange={(e) => setFilterRetailer(e.target.value)}
+                            />
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredMED.map(key => (
+                    {filteredMED.map((key) => (
                         <tr key={key}>
                             <td>{medicineData[MED[key].name]?.id || MED[key].id}</td>
                             <td>{MED[key].name}</td>
                             <td>{MED[key].description}</td>
                             <td>{MedStage[key]}</td>
+                            <td>{MED[key].retailer}</td> {/* Perakendeci Bilgisi */}
                         </tr>
                     ))}
                 </tbody>
