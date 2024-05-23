@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useHistory } from "react-router-dom"
 import Web3 from "web3";
 import SupplyChainABI from "./artifacts/SupplyChain.json"
+import { useRawMaterialSuppliers, useManufacturers, useDistributors, useRetailers } from './AssignRoles'; // Import the custom hooks
+
 
 function Supply() {
     const history = useHistory()
@@ -15,7 +17,14 @@ function Supply() {
     const [SupplyChain, setSupplyChain] = useState();
     const [MED, setMED] = useState();
     const [MedStage, setMedStage] = useState();
-    const [ID, setID] = useState();
+    const [MedicineIDs, setMedicineIDs] = useState([]); // Add state for Medicine IDs
+    const [ID, setID] = useState('');
+
+    const rawMaterialSuppliers = useRawMaterialSuppliers(); // Use the custom hook
+    const manufacturers = useManufacturers();
+    const distributors = useDistributors();
+    const retailers = useRetailers();
+
 
     const medicineData = {
         Aspirin: { id: 'A278593', description: 'Pain Reliever' },
@@ -53,20 +62,22 @@ function Supply() {
         if (networkData) {
             const supplychain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
             setSupplyChain(supplychain);
-            var i;
             const medCtr = await supplychain.methods.medicineCtr().call();
             const med = {};
-            const medStage = [];
-            for (i = 0; i < medCtr; i++) {
-                med[i] = await supplychain.methods.MedicineStock(i + 1).call();
+            const medStage = {};
+            const medicineIDs = [];
+            for (let i = 0; i < medCtr; i++) {
+                const medicine = await supplychain.methods.MedicineStock(i + 1).call();
+                med[i] = medicine;
                 medStage[i] = await supplychain.methods.showStage(i + 1).call();
+                medicineIDs.push(medicine.id);
             }
             setMED(med);
             setMedStage(medStage);
+            setMedicineIDs(medicineIDs); // Store Medicine IDs
             setloader(false);
-        }
-        else {
-            window.alert('The smart contract is not deployed to current network')
+        } else {
+            window.alert('The smart contract is not deployed to current network');
         }
     }
     if (loader) {
@@ -163,78 +174,136 @@ function Supply() {
                     </tr>
                 </thead>
                 <tbody>
-                    {Object.keys(MED).map(function (key) {
-                        return (
-                            <tr key={key}>
-                                <td>{medicineData[MED[key].name]?.id || MED[key].id}</td>
-                                <td>{MED[key].name}</td>
-                                <td>{MED[key].description}</td>
-                                <td>{MedStage[key]}</td>
-                            </tr>
-                        );
-                    })}
+                {Object.keys(MED).map(function (key) {
+                    return (
+                    <tr key={key}>
+                        <td>{medicineData[MED[key].name]?.id || MED[key].id}</td>
+                        <td>{MED[key].name}</td>
+                        <td>{MED[key].description}</td>
+                        <td>{MedStage[key]}</td>
+                    </tr>
+                    );
+                })}
                 </tbody>
+
             </table>
     
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 1: Supply Raw Materials</b> (Only a registered Raw Material Supplier can perform this step):</h5>
-                    <form onSubmit={handlerSubmitRMSsupply} className="mb-4">
-                        <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <button className="btn btn-outline-success btn-sm" type="submit">Supply</button>
-                        </div>
-                    </form>
-                </div>
+                        <h5 className="card-title"><b>Step 1: Supply Raw Materials</b> (Only a registered Raw Material Supplier can perform this step):</h5>
+                        <form onSubmit={handlerSubmitRMSsupply} className="mb-4">
+                            <div className="input-group mb-3">
+                                <select className="form-select" onChange={handlerChangeID} required>
+                                    <option value="">Select Medicine ID</option>
+                                    {MedicineIDs.map((id, index) => (
+                                        <option key={index} value={id}>{id}</option>
+                                    ))}
+                                </select>
+                                <select className="form-select" required>
+                                    <option value="">Select Raw Material Supplier</option>
+                                    {rawMaterialSuppliers.map((supplier, index) => (
+                                        <option key={index} value={supplier.id}>
+                                            {supplier.name} - {supplier.place}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button className="btn btn-outline-success btn-sm" type="submit">Supply</button>
+                            </div>
+                        </form>
+                    </div>
             </div>
     
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 2: Manufacture</b> (Only a registered Manufacturer can perform this step):</h5>
-                    <form onSubmit={handlerSubmitManufacturing} className="mb-4">
-                        <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <button className="btn btn-outline-success btn-sm" type="submit">Manufacture</button>
-                        </div>
-                    </form>
-                </div>
+                        <h5 className="card-title"><b>Step 2: Manufacture</b> (Only a registered Manufacturer can perform this step):</h5>
+                        <form onSubmit={handlerSubmitManufacturing} className="mb-4">
+                            <div className="input-group mb-3">
+                                <select className="form-select" onChange={handlerChangeID} required>
+                                    <option value="">Select Medicine ID</option>
+                                    {MedicineIDs.map((id, index) => (
+                                        <option key={index} value={id}>{id}</option>
+                                    ))}
+                                </select>
+                                <select className="form-select" required>
+                                    <option value="">Select Manufacturer</option>
+                                    {manufacturers.map((manufacturer, index) => (
+                                        <option key={index} value={manufacturer.id}>
+                                            {manufacturer.name} - {manufacturer.place}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button className="btn btn-outline-success btn-sm" type="submit">Manufacture</button>
+                            </div>
+                        </form>
+                    </div>
             </div>
     
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 3: Distribute</b> (Only a registered Distributor can perform this step):</h5>
-                    <form onSubmit={handlerSubmitDistribute} className="mb-4">
-                        <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <button className="btn btn-outline-success btn-sm" type="submit">Distribute</button>
-                        </div>
-                    </form>
-                </div>
+                        <h5 className="card-title"><b>Step 3: Distribute</b> (Only a registered Distributor can perform this step):</h5>
+                        <form onSubmit={handlerSubmitDistribute} className="mb-4">
+                            <div className="input-group mb-3">
+                                <select className="form-select" onChange={handlerChangeID} required>
+                                    <option value="">Select Medicine ID</option>
+                                    {MedicineIDs.map((id, index) => (
+                                        <option key={index} value={id}>{id}</option>
+                                    ))}
+                                </select>
+                                <select className="form-select" required>
+                                    <option value="">Select Distributor</option>
+                                    {distributors.map((distributor, index) => (
+                                        <option key={index} value={distributor.id}>
+                                            {distributor.name} - {distributor.place}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button className="btn btn-outline-success btn-sm" type="submit">Distribute</button>
+                            </div>
+                        </form>
+                    </div>
             </div>
     
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 4: Retail</b> (Only a registered Retailer can perform this step):</h5>
-                    <form onSubmit={handlerSubmitRetail} className="mb-4">
-                        <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <button className="btn btn-outline-success btn-sm" type="submit">Retail</button>
-                        </div>
-                    </form>
-                </div>
+                        <h5 className="card-title"><b>Step 4: Retail</b> (Only a registered Retailer can perform this step):</h5>
+                        <form onSubmit={handlerSubmitRetail} className="mb-4">
+                            <div className="input-group mb-3">
+                                <select className="form-select" onChange={handlerChangeID} required>
+                                    <option value="">Select Medicine ID</option>
+                                    {MedicineIDs.map((id, index) => (
+                                        <option key={index} value={id}>{id}</option>
+                                    ))}
+                                </select>
+                                <select className="form-select" required>
+                                    <option value="">Select Retailer</option>
+                                    {retailers.map((retailer, index) => (
+                                        <option key={index} value={retailer.id}>
+                                            {retailer.name} - {retailer.place}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button className="btn btn-outline-success btn-sm" type="submit">Retail</button>
+                            </div>
+                        </form>
+                    </div>
             </div>
     
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 5: Mark as sold</b> (Only a registered Retailer can perform this step):</h5>
-                    <form onSubmit={handlerSubmitSold} className="mb-4">
-                        <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <button className="btn btn-outline-success btn-sm" type="submit">Sold</button>
-                        </div>
-                    </form>
+                        <h5 className="card-title"><b>Step 5: Mark as sold</b> (Only a registered Retailer can perform this step):</h5>
+                        <form onSubmit={handlerSubmitSold} className="mb-4">
+                            <div className="input-group mb-3">
+                                <select className="form-select" onChange={handlerChangeID} required>
+                                    <option value="">Select Medicine ID</option>
+                                    {MedicineIDs.map((id, index) => (
+                                        <option key={index} value={id}>{id}</option>
+                                    ))}
+                                </select>
+                                <button className="btn btn-outline-success btn-sm" type="submit">Sold</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </div>
         </div>
     );
     
