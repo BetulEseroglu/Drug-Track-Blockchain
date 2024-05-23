@@ -46,7 +46,7 @@ contract SupplyChain {
 
     //To store information about the medicine
     struct medicine {
-        uint256 id; //unique medicine id
+        string id; //unique medicine id
         string name; //name of the medicine
         string description; //about medicine
         uint256 RMSid; //id of the Raw Material supplier for this particular medicine
@@ -97,7 +97,10 @@ contract SupplyChain {
         uint256 id; //manufacturer id
         string name; //Name of the manufacturer
         string place; //Place the manufacturer is based in
-        uint256 serialNumber ;
+        string drugName; // Name of the drug
+        string drugID; // ID of the drug
+        uint256 serialNumber;
+        string stock;
     }
 
     //To store all the manufacturers on the blockchain
@@ -140,11 +143,15 @@ contract SupplyChain {
         address _address,
         string memory _name,
         string memory _place,
-        uint256 _serialNumber
+        string memory _drugName,
+        string memory _drugID,
+        uint256 _serialNumber,
+        string memory _stock
     ) public onlyByOwner() {
         manCtr++;
-        MAN[manCtr] = manufacturer(_address, manCtr, _name, _place,_serialNumber);
+        MAN[manCtr] = manufacturer(_address, manCtr, _name, _place, _drugName, _drugID, _serialNumber, _stock);
     }
+
 
     //To add distributor. Only contract owner can add a new distributor
     function addDistributor(
@@ -253,14 +260,14 @@ contract SupplyChain {
     }
 
     // To add new medicines to the stock
-    function addMedicine(string memory _name, string memory _description)
+    function addMedicine(string memory _name, string memory _description, string memory _id)
         public
         onlyByOwner()
     {
         require((rmsCtr > 0) && (manCtr > 0) && (disCtr > 0) && (retCtr > 0));
         medicineCtr++;
         MedicineStock[medicineCtr] = medicine(
-            medicineCtr,
+            _id,
             _name,
             _description,
             0,
