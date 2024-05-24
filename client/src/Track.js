@@ -421,12 +421,22 @@ function Track() {
             <table className="table table-sm table-bordered mb-4">
                 <thead className="table-dark">
                     <tr>
+                    <th scope="col">
+                             ID
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter ID"
+                                value={filterID}
+                                onChange={(e) => setFilterID(e.target.value)}
+                            />
+                        </th>
                         <th scope="col">
                             Medicine ID
                             <input
                                 type="text"
                                 className="form-control form-control-sm"
-                                placeholder="Filter ID"
+                                placeholder="Filter Medicine ID"
                                 value={filterID}
                                 onChange={(e) => setFilterID(e.target.value)}
                             />
@@ -464,8 +474,9 @@ function Track() {
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredMED.map(key => (
+                    {filteredMED.map((key, index)=> (
                         <tr key={key}>
+                            <td>{index + 1}</td>
                             <td>{MED[key].id}</td>
                             <td>{MED[key].name}</td>
                             <td>{MED[key].description}</td>

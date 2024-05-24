@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import Web3 from 'web3';
 import SupplyChainABI from './artifacts/SupplyChain.json';
-import { useRetailers } from './AssignRoles'; // Perakendeci bilgilerini çekmek için import ediyoruz
+import { useRetailers } from './AssignRoles'; 
 
 function AddMed() {
     const history = useHistory();
@@ -125,12 +125,14 @@ function AddMed() {
     const filteredMED = Object.keys(MED).filter(key => {
         const med = MED[key];
         return (
+            (filterID === "" || (parseInt(key) + 1).toString().includes(filterID) || med.id.toLowerCase().includes(filterID.toLowerCase())) && // ID filtresi
             (filterName === "" || med.name.toLowerCase().includes(filterName.toLowerCase())) &&
             (filterDescription === "" || med.description.toLowerCase().includes(filterDescription.toLowerCase())) &&
             (filterStage === "" || MedStage[key].toLowerCase().includes(filterStage.toLowerCase())) &&
             (filterRetailer === "" || med.retailer.toLowerCase().includes(filterRetailer.toLowerCase()))
         );
     });
+    
 
     return (
         <div className="container mt-4">
@@ -168,71 +170,84 @@ function AddMed() {
 
             <h4>Ordered Medicines:</h4>
             <table className="table table-striped table-hover table-sm mb-4">
-                <thead className="table-dark">
-                    <tr>
-                        <th scope="col">
-                            ID
-                            <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="Filter ID"
-                                value={filterID}
-                                onChange={(e) => setFilterID(e.target.value)}
-                            />
-                        </th>
-                        <th scope="col">
-                            Name
-                            <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="Filter Name"
-                                value={filterName}
-                                onChange={(e) => setFilterName(e.target.value)}
-                            />
-                        </th>
-                        <th scope="col">
-                            Description
-                            <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="Filter Description"
-                                value={filterDescription}
-                                onChange={(e) => setFilterDescription(e.target.value)}
-                            />
-                        </th>
-                        <th scope="col">
-                            Current Stage
-                            <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="Filter Stage"
-                                value={filterStage}
-                                onChange={(e) => setFilterStage(e.target.value)}
-                            />
-                        </th>
-                        <th scope="col">
-                            Retailer
-                            <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="Filter Retailer"
-                                value={filterRetailer}
-                                onChange={(e) => setFilterRetailer(e.target.value)}
-                            />
-                        </th>
+            <thead className="table-dark">
+                <tr>
+                    <th scope="col">
+                        ID
+                        <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder="Filter ID"
+                            value={filterID}
+                            onChange={(e) => setFilterID(e.target.value)}
+                        />
+                    </th> 
+                    <th scope="col">
+                        Medicine ID
+                        <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder="Filter Medicine ID"
+                            value={filterID}
+                            onChange={(e) => setFilterID(e.target.value)}
+                        />
+                    </th>
+                    <th scope="col">
+                        Name
+                        <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder="Filter Name"
+                            value={filterName}
+                            onChange={(e) => setFilterName(e.target.value)}
+                        />
+                    </th>
+                    <th scope="col">
+                        Description
+                        <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder="Filter Description"
+                            value={filterDescription}
+                            onChange={(e) => setFilterDescription(e.target.value)}
+                        />
+                    </th>
+                    <th scope="col">
+                        Current Stage
+                        <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder="Filter Stage"
+                            value={filterStage}
+                            onChange={(e) => setFilterStage(e.target.value)}
+                        />
+                    </th>
+                    <th scope="col">
+                        Retailer
+                        <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder="Filter Retailer"
+                            value={filterRetailer}
+                            onChange={(e) => setFilterRetailer(e.target.value)}
+                        />
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {filteredMED.map((key, index) => (
+                    <tr key={key}>
+                        <td>{index + 1}</td> 
+                        <td>{medicineData[MED[key].name]?.id || MED[key].id}</td>
+                        <td>{MED[key].name}</td>
+                        <td>{MED[key].description}</td>
+                        <td>{MedStage[key]}</td>
+                        <td>{MED[key].retailer}</td>
                     </tr>
-                </thead>
-                <tbody>
-                    {filteredMED.map((key) => (
-                        <tr key={key}>
-                            <td>{medicineData[MED[key].name]?.id || MED[key].id}</td>
-                            <td>{MED[key].name}</td>
-                            <td>{MED[key].description}</td>
-                            <td>{MedStage[key]}</td>
-                            <td>{MED[key].retailer}</td> {/* Perakendeci Bilgisi */}
-                        </tr>
-                    ))}
-                </tbody>
+                ))}
+            </tbody>
+
             </table>
         </div>
     );
