@@ -37,13 +37,13 @@ function Supply() {
         Aspirin: { id: 'A278593', description: 'Pain Reliever' },
         Arvales: { id: 'A394857', description: 'Pain Reliever' },
         Parol: { id: 'P394857', description: 'Pain Reliever' },
-        Augmentin: { id: 'B123456', description: 'Antibiotic' },
+        Augmentin: { id: 'A123456', description: 'Antibiotic' },
         Vermidon: { id: 'V654321', description: 'Pain Reliever' },
         Majezik: { id: 'M789012', description: 'Pain Reliever' },
         Dolorex: { id: 'D345678', description: 'Pain Reliever' },
         Aprol: { id: 'A456789', description: 'Pain Reliever' },
         Dikloron: { id: 'D567890', description: 'Pain Reliever' },
-        Cipralex: { id: 'C678901', description: 'Antidepressant' },
+        Cipralex: { id: 'C678901', description: 'Antidepressant' }
     };
 
     const loadWeb3 = async () => {

@@ -4,27 +4,28 @@ import SupplyChainABI from './artifacts/SupplyChain.json';
 import { useHistory } from 'react-router-dom';
 import QRCodeGenerator from './QRCodeGenerator';
 
-export function useDistributors() {
-    const [distributors, setDistributors] = useState([]);
+export function useRawMaterialSuppliers() {
+    const [rawMaterialSuppliers, setRawMaterialSuppliers] = useState([]);
+
     useEffect(() => {
-        const loadDistributors = async () => {
+        const loadRawMaterialSuppliers = async () => {
             const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
             const networkId = await web3.eth.net.getId();
             const networkData = SupplyChainABI.networks[networkId];
             if (networkData) {
                 const supplyChain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
-                const disCtr = await supplyChain.methods.disCtr().call();
-                const dis = [];
-                for (let i = 0; i < disCtr; i++) {
-                    const distributor = await supplyChain.methods.DIS(i + 1).call();
-                    dis.push(distributor);
+                const rmsCtr = await supplyChain.methods.rmsCtr().call();
+                const rms = [];
+                for (let i = 0; i < rmsCtr; i++) {
+                    const rawMaterialSupplier = await supplyChain.methods.RMS(i + 1).call();
+                    rms.push(rawMaterialSupplier);
                 }
-                setDistributors(dis);
+                setRawMaterialSuppliers(rms);
             }
         };
-        loadDistributors();
+        loadRawMaterialSuppliers();
     }, []);
-    return distributors;
+    return rawMaterialSuppliers;
 }
 
 export function useManufacturers() {
@@ -51,6 +52,29 @@ export function useManufacturers() {
     return manufacturers;
 }
 
+export function useDistributors() {
+    const [distributors, setDistributors] = useState([]);
+    useEffect(() => {
+        const loadDistributors = async () => {
+            const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
+            const networkId = await web3.eth.net.getId();
+            const networkData = SupplyChainABI.networks[networkId];
+            if (networkData) {
+                const supplyChain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
+                const disCtr = await supplyChain.methods.disCtr().call();
+                const dis = [];
+                for (let i = 0; i < disCtr; i++) {
+                    const distributor = await supplyChain.methods.DIS(i + 1).call();
+                    dis.push(distributor);
+                }
+                setDistributors(dis);
+            }
+        };
+        loadDistributors();
+    }, []);
+    return distributors;
+}
+
 export function useRetailers() {
     const [retailers, setRetailers] = useState([]);
 
@@ -73,30 +97,6 @@ export function useRetailers() {
         loadRetailers();
     }, []);
     return retailers;
-}
-
-export function useRawMaterialSuppliers() {
-    const [rawMaterialSuppliers, setRawMaterialSuppliers] = useState([]);
-
-    useEffect(() => {
-        const loadRawMaterialSuppliers = async () => {
-            const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
-            const networkId = await web3.eth.net.getId();
-            const networkData = SupplyChainABI.networks[networkId];
-            if (networkData) {
-                const supplyChain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
-                const rmsCtr = await supplyChain.methods.rmsCtr().call();
-                const rms = [];
-                for (let i = 0; i < rmsCtr; i++) {
-                    const rawMaterialSupplier = await supplyChain.methods.RMS(i + 1).call();
-                    rms.push(rawMaterialSupplier);
-                }
-                setRawMaterialSuppliers(rms);
-            }
-        };
-        loadRawMaterialSuppliers();
-    }, []);
-    return rawMaterialSuppliers;
 }
 
 function AssignRoles() {
@@ -142,6 +142,12 @@ function AssignRoles() {
     const [MANdrugDescription, setMANdrugDescription] = useState("");
     const [serialNumber, setSerialNumber] = useState('');
     const [stock, setStock] = useState('');
+
+    //ilkay added
+    const [verificationSerialNumber, setVerificationSerialNumber] = useState(''); 
+    const [verificationPassword, setVerificationPassword] = useState('');
+    const [verificationAttempts, setVerificationAttempts] = useState({});
+    const [verificationMessage, setVerificationMessage] = useState('');
 
     const medicineData = {
         Aspirin: { id: 'A278593', description: 'Pain Reliever' },
@@ -376,6 +382,85 @@ function AssignRoles() {
         return code;
     };
 
+    //ilkay added
+    const generateSerialNumber = () => {
+        let serial;
+        do {
+            serial = Math.floor(Math.random() * (999999 - 1000 + 1) + 1000).toString();
+        } while (serialNumbers.has(serial));
+    
+        const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+        const complexKey = generateComplexKey();
+    
+        const serialData = {
+            serialNumber: serial,
+            verificationCode: verificationCode,
+            complexKey: complexKey,
+            attempts: 0 // yeni eklenen
+        };
+    
+        console.log(serialData);
+        downloadJSON(serialData);
+    
+        localStorage.setItem(serial, JSON.stringify(serialData)); // localStorage'a kaydetme
+    
+        setSerialNumber(serial);
+    };
+    
+    //ilkay added
+    const generateComplexKey = () => {
+        return 'xxxx-xxxx-xxxx-xxxx'.replace(/[x]/g, () => {
+            return (Math.random() * 16 | 0).toString(16);
+        });
+    };
+    
+    //ilkay added
+    const downloadJSON = (data) => {
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'serialData.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+    
+    //ilkay added
+    const handleVerifyProduct = (event) => {
+        event.preventDefault();
+    
+        if (!verificationSerialNumber || !verificationPassword) {
+            setVerificationMessage('Seri numarası ve şifre gereklidir.');
+            return;
+        }
+    
+        const storedData = localStorage.getItem(verificationSerialNumber);
+        if (!storedData) {
+            setVerificationMessage('Geçersiz seri numarası.');
+            return;
+        }
+    
+        const { verificationCode, complexKey, attempts } = JSON.parse(storedData);
+        if (attempts >= 3) {
+            setVerificationMessage('Şifre giriş hakkı doldu. Ürün doğrulanamadı.');
+            return;
+        }
+    
+        if (verificationPassword === verificationCode || verificationPassword === complexKey) {
+            if (attempts === 0) {
+                setVerificationMessage('Ürün orijinal ve ilk kez doğrulanmıştır.');
+            } else {
+                setVerificationMessage('Bu seri numarası daha önce doğrulandı.');
+            }
+            localStorage.setItem(verificationSerialNumber, JSON.stringify({ verificationCode, complexKey, attempts: attempts + 1 }));
+        } else {
+            setVerificationMessage('Geçersiz şifre.');
+            localStorage.setItem(verificationSerialNumber, JSON.stringify({ verificationCode, complexKey, attempts: attempts + 1 }));
+        }
+    };
+
     const generateQRCodeValue = async () => {
         if (serialNumbers.has(serialNumber)) {
             alert('This serial number is already in use. Please use another serial number.');
@@ -565,8 +650,10 @@ function AssignRoles() {
                     <input className="form-control" type="text" value={MANdrugID} placeholder="Medicine ID" readOnly />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handleSerialNumberChange} placeholder="Serial Number" required />
+                <input className="form-control" type="text" value={serialNumber} onChange={handleSerialNumberChange} placeholder="Serial Number" required />
+                <button type="button" onClick={generateSerialNumber} className="btn btn-outline-secondary btn-sm mt-2">Otomatik Seri No Oluştur</button>
                 </div>
+
                 <div className="mb-3">
                     <input className="form-control" type="number" onChange={(e) => setStock(e.target.value)} placeholder="Stock Quantity" required />
                 </div>
@@ -574,7 +661,7 @@ function AssignRoles() {
                     <button type="button" onClick={generateQRCodeValue} className="btn btn-outline-primary btn-sm">Create QR Code</button>
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handleCodeChange} placeholder="Verification Code" required />
+                    <input className="form-control" type="text" onChange={handleCodeChange} placeholder="Verification Number" required />
                 </div>
                 <button className="btn btn-outline-success btn-sm" type="submit" disabled={!isCodeValid}>Register</button>
             </form>
@@ -697,6 +784,18 @@ function AssignRoles() {
                     ))}
                 </tbody>
             </table>
+
+            <h4>Ürün Doğrula:</h4>
+            <form onSubmit={handleVerifyProduct} className="mb-4">
+                <div className="mb-3">
+                    <input className="form-control" type="text" onChange={(e) => setVerificationSerialNumber(e.target.value)} placeholder="Seri Numarası" required />
+                </div>
+                <div className="mb-3">
+                    <input className="form-control" type="text" onChange={(e) => setVerificationPassword(e.target.value)} placeholder="Şifre" required />
+                </div>
+                <button className="btn btn-outline-success btn-sm" type="submit">Kayıt</button>
+                {verificationMessage && <div className="mt-3"><b>{verificationMessage}</b></div>}
+            </form>
 
             <h4>Distributors:</h4>
             <form onSubmit={handlerSubmitDIS} className="mb-4">
