@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import Web3 from 'web3';
 import SupplyChainABI from './artifacts/SupplyChain.json';
-import { useRawMaterialSuppliers } from './AssignRoles'; // Import the custom hook
+import { useRawMaterialSuppliers, useManufacturers, useDistributors, useRetailers } from './AssignRoles';
 
 function Supply() {
     const history = useHistory();
     useEffect(() => {
         loadWeb3();
-        loadBlockchainData();
+        loadBlockchaindata();
     }, []);
 
     const [currentaccount, setCurrentaccount] = useState('');
@@ -16,13 +16,35 @@ function Supply() {
     const [SupplyChain, setSupplyChain] = useState();
     const [MED, setMED] = useState({});
     const [MedStage, setMedStage] = useState({});
-    const [ID, setID] = useState('');
-    const rawMaterialSuppliers = useRawMaterialSuppliers(); // Use the custom hook
-    const [selectedSupplier, setSelectedSupplier] = useState('');
+    const [MedicineIDs, setMedicineIDs] = useState([]);
+    const [RMSID, setRMSID] = useState('');
+    const [RMSMedicineID, setRMSMedicineID] = useState('');
+    const [ManufacturingID, setManufacturingID] = useState('');
+    const [ManufacturingMedicineID, setManufacturingMedicineID] = useState('');
+    const [DistributeID, setDistributeID] = useState('');
+    const [DistributeMedicineID, setDistributeMedicineID] = useState('');
+    const [RetailID, setRetailID] = useState('');
+    const [RetailMedicineID, setRetailMedicineID] = useState('');
+    const [SoldID, setSoldID] = useState('');
+    const [SoldMedicineID, setSoldMedicineID] = useState('');
 
-    // State for filters
-    const [rmsFilter, setRmsFilter] = useState({ id: '', name: '', place: '', addr: '' });
-    const [medFilter, setMedFilter] = useState({ id: '', name: '', description: '', stage: '' });
+    const rawMaterialSuppliers = useRawMaterialSuppliers();
+    const manufacturers = useManufacturers();
+    const distributors = useDistributors();
+    const retailers = useRetailers();
+
+    const medicineData = {
+        Aspirin: { id: 'A278593', description: 'Pain Reliever' },
+        Arvales: { id: 'A394857', description: 'Pain Reliever' },
+        Parol: { id: 'P394857', description: 'Pain Reliever' },
+        Augmentin: { id: 'B123456', description: 'Antibiotic' },
+        Vermidon: { id: 'V654321', description: 'Pain Reliever' },
+        Majezik: { id: 'M789012', description: 'Pain Reliever' },
+        Dolorex: { id: 'D345678', description: 'Pain Reliever' },
+        Aprol: { id: 'A456789', description: 'Pain Reliever' },
+        Dikloron: { id: 'D567890', description: 'Pain Reliever' },
+        Cipralex: { id: 'C678901', description: 'Antidepressant' },
+    };
 
     const loadWeb3 = async () => {
         if (window.ethereum) {
@@ -35,7 +57,7 @@ function Supply() {
         }
     };
 
-    const loadBlockchainData = async () => {
+    const loadBlockchaindata = async () => {
         setloader(true);
         const web3 = window.web3;
         const accounts = await web3.eth.getAccounts();
@@ -49,15 +71,90 @@ function Supply() {
             const medCtr = await supplychain.methods.medicineCtr().call();
             const med = {};
             const medStage = {};
+            const medicineIDs = [];
             for (let i = 0; i < medCtr; i++) {
-                med[i] = await supplychain.methods.MedicineStock(i + 1).call();
+                const medicine = await supplychain.methods.MedicineStock(i + 1).call();
+                med[i] = medicine;
                 medStage[i] = await supplychain.methods.showStage(i + 1).call();
+                medicineIDs.push(medicine.id);
             }
             setMED(med);
             setMedStage(medStage);
+            setMedicineIDs(medicineIDs);
             setloader(false);
         } else {
             window.alert('The smart contract is not deployed to current network');
+        }
+    };
+
+    const redirect_to_home = () => {
+        history.push('/');
+    };
+
+    const handlerChangeID = (setID, setMedicineID) => (event) => {
+        const selectedID = event.target.value;
+        setID(selectedID);
+        const medicine = MED[selectedID - 1];
+        setMedicineID(medicine ? medicine.id : '');
+    };
+
+    const handlerSubmitRMSsupply = async (event) => {
+        event.preventDefault();
+        try {
+            var reciept = await SupplyChain.methods.RMSsupply(RMSID).send({ from: currentaccount });
+            if (reciept) {
+                loadBlockchaindata();
+            }
+        } catch (err) {
+            alert('An error occured!!!');
+        }
+    };
+
+    const handlerSubmitManufacturing = async (event) => {
+        event.preventDefault();
+        try {
+            var reciept = await SupplyChain.methods.Manufacturing(ManufacturingID).send({ from: currentaccount });
+            if (reciept) {
+                loadBlockchaindata();
+            }
+        } catch (err) {
+            alert('An error occured!!!');
+        }
+    };
+
+    const handlerSubmitDistribute = async (event) => {
+        event.preventDefault();
+        try {
+            var reciept = await SupplyChain.methods.Distribute(DistributeID).send({ from: currentaccount });
+            if (reciept) {
+                loadBlockchaindata();
+            }
+        } catch (err) {
+            alert('An error occured!!!');
+        }
+    };
+
+    const handlerSubmitRetail = async (event) => {
+        event.preventDefault();
+        try {
+            var reciept = await SupplyChain.methods.Retail(RetailID).send({ from: currentaccount });
+            if (reciept) {
+                loadBlockchaindata();
+            }
+        } catch (err) {
+            alert('An error occured!!!');
+        }
+    };
+
+    const handlerSubmitSold = async (event) => {
+        event.preventDefault();
+        try {
+            var reciept = await SupplyChain.methods.sold(SoldID).send({ from: currentaccount });
+            if (reciept) {
+                loadBlockchaindata();
+            }
+        } catch (err) {
+            alert('An error occured!!!');
         }
     };
 
@@ -69,214 +166,76 @@ function Supply() {
         );
     }
 
-    const redirect_to_home = () => {
-        history.push('/');
-    };
-
-    const handlerChangeID = (event) => {
-        setID(event.target.value);
-    };
-
-    const handleSupplierChange = (event) => {
-        setSelectedSupplier(event.target.value);
-    };
-
-    const handleRmsFilterChange = (event) => {
-        const { name, value } = event.target;
-        setRmsFilter((prevFilter) => ({ ...prevFilter, [name]: value }));
-    };
-
-    const handleMedFilterChange = (event) => {
-        const { name, value } = event.target;
-        setMedFilter((prevFilter) => ({ ...prevFilter, [name]: value }));
-    };
-
-    const filterRms = (rms) => {
-        return rms.filter((supplier) => {
-            return (
-                (rmsFilter.id === '' || supplier.id.toString().includes(rmsFilter.id)) &&
-                (rmsFilter.name === '' || supplier.name.toLowerCase().includes(rmsFilter.name.toLowerCase())) &&
-                (rmsFilter.place === '' || supplier.place.toLowerCase().includes(rmsFilter.place.toLowerCase())) &&
-                (rmsFilter.addr === '' || supplier.addr.toLowerCase().includes(rmsFilter.addr.toLowerCase()))
-            );
-        });
-    };
-
-    const filterMed = (med) => {
-        return Object.keys(med).filter((key) => {
-            return (
-                (medFilter.id === '' || med[key].id.toString().includes(medFilter.id)) &&
-                (medFilter.name === '' || med[key].name.toLowerCase().includes(medFilter.name.toLowerCase())) &&
-                (medFilter.description === '' || med[key].description.toLowerCase().includes(medFilter.description.toLowerCase())) &&
-                (medFilter.stage === '' || MedStage[key].toLowerCase().includes(medFilter.stage.toLowerCase()))
-            );
-        });
-    };
-
-    const handlerSubmit = async (event, method) => {
-        event.preventDefault();
-        try {
-            const receipt = await SupplyChain.methods[method](ID, selectedSupplier).send({ from: currentaccount });
-            if (receipt) {
-                loadBlockchainData();
-            }
-        } catch (err) {
-            alert('An error occurred!!!');
-        }
-    };
-
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <span><b>Current Account Address:</b> {currentaccount}</span>
-                <button onClick={redirect_to_home} className="btn btn-outline-danger btn-sm">HOME</button>
+                <span>
+                    <b>Current Account Address:</b> {currentaccount}
+                </span>
+                <button onClick={redirect_to_home} className="btn btn-outline-danger btn-sm">
+                    HOME
+                </button>
             </div>
 
-            <h6><b>Supply Chain Flow:</b></h6>
-            <p>Medicine Order -&gt; Raw Material Supplier -&gt; Manufacturer -&gt; Distributor -&gt; Retailer -&gt; Consumer</p>
+            <h6>
+                <b>Supply Chain Flow:</b>
+            </h6>
+            <p>
+                Medicine Order -&gt; Raw Material Supplier -&gt; Manufacturer -&gt; Distributor -&gt; Retailer -&gt; Consumer
+            </p>
 
             <table className="table table-striped table-hover table-sm mb-4">
                 <thead className="table-dark">
                     <tr>
+                        <th scope="col">ID</th>
                         <th scope="col">Medicine ID</th>
                         <th scope="col">Name</th>
                         <th scope="col">Description</th>
                         <th scope="col">Current Processing Stage</th>
                     </tr>
-                    <tr>
-                        <th>
-                            <input
-                                className="form-control form-control-sm"
-                                type="text"
-                                name="id"
-                                placeholder="Filter"
-                                value={medFilter.id}
-                                onChange={handleMedFilterChange}
-                            />
-                        </th>
-                        <th>
-                            <input
-                                className="form-control form-control-sm"
-                                type="text"
-                                name="name"
-                                placeholder="Filter"
-                                value={medFilter.name}
-                                onChange={handleMedFilterChange}
-                            />
-                        </th>
-                        <th>
-                            <input
-                                className="form-control form-control-sm"
-                                type="text"
-                                name="description"
-                                placeholder="Filter"
-                                value={medFilter.description}
-                                onChange={handleMedFilterChange}
-                            />
-                        </th>
-                        <th>
-                            <input
-                                className="form-control form-control-sm"
-                                type="text"
-                                name="stage"
-                                placeholder="Filter"
-                                value={medFilter.stage}
-                                onChange={handleMedFilterChange}
-                            />
-                        </th>
-                    </tr>
                 </thead>
                 <tbody>
-                    {filterMed(MED).map((key) => (
-                        <tr key={key}>
-                            <td>{MED[key].id}</td>
-                            <td>{MED[key].name}</td>
-                            <td>{MED[key].description}</td>
-                            <td>{MedStage[key]}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            <h5 className="mb-4">Filter Raw Material Suppliers:</h5>
-            <table className="table table-striped table-hover table-sm mb-4">
-                <thead className="table-dark">
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Name</th>
-                        <th scope="col">Place</th>
-                        <th scope="col">Ethereum Address</th>
-                    </tr>
-                    <tr>
-                        <th>
-                            <input
-                                className="form-control form-control-sm"
-                                type="text"
-                                name="id"
-                                placeholder="Filter"
-                                value={rmsFilter.id}
-                                onChange={handleRmsFilterChange}
-                            />
-                        </th>
-                        <th>
-                            <input
-                                className="form-control form-control-sm"
-                                type="text"
-                                name="name"
-                                placeholder="Filter"
-                                value={rmsFilter.name}
-                                onChange={handleRmsFilterChange}
-                            />
-                        </th>
-                        <th>
-                            <input
-                                className="form-control form-control-sm"
-                                type="text"
-                                name="place"
-                                placeholder="Filter"
-                                value={rmsFilter.place}
-                                onChange={handleRmsFilterChange}
-                            />
-                        </th>
-                        <th>
-                            <input
-                                className="form-control form-control-sm"
-                                type="text"
-                                name="addr"
-                                placeholder="Filter"
-                                value={rmsFilter.addr}
-                                onChange={handleRmsFilterChange}
-                            />
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filterRms(rawMaterialSuppliers).map((supplier, index) => (
-                        <tr key={index}>
-                            <td>{supplier.id}</td>
-                            <td>{supplier.name}</td>
-                            <td>{supplier.place}</td>
-                            <td>{supplier.addr}</td>
-                        </tr>
-                    ))}
+                    {Object.keys(MED).map(function (key, index) {
+                        return (
+                            <tr key={key}>
+                                <td>{index + 1}</td>
+                                <td>{medicineData[MED[key].name]?.id || MED[key].id}</td>
+                                <td>{MED[key].name}</td>
+                                <td>{MED[key].description}</td>
+                                <td>{MedStage[key]}</td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
 
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 1: Supply Raw Materials</b> (Only a registered Raw Material Supplier can perform this step):</h5>
-                    <form onSubmit={(event) => handlerSubmit(event, 'RMSsupply')} className="mb-4">
+                    <h5 className="card-title">
+                        <b>Step 1: Supply Raw Materials</b> (Only a registered Raw Material Supplier can perform this step):
+                    </h5>
+                    <form onSubmit={handlerSubmitRMSsupply} className="mb-4">
                         <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <select className="form-select" onChange={handleSupplierChange} required>
+                            <select className="form-select" onChange={handlerChangeID(setRMSID, setRMSMedicineID)} required>
+                                <option value="">Select ID</option>
+                                {Object.keys(MED).map((key, index) => (
+                                    <option key={index} value={index + 1}>
+                                        {index + 1}
+                                    </option>
+                                ))}
+                            </select>
+                            <input type="text" className="form-control" value={RMSMedicineID} placeholder="Medicine ID" readOnly />
+                            <select className="form-select" required>
                                 <option value="">Select Raw Material Supplier</option>
-                                {filterRms(rawMaterialSuppliers).map((supplier, index) => (
-                                    <option key={index} value={supplier.addr}>
+                                {rawMaterialSuppliers.map((supplier, index) => (
+                                    <option key={index} value={supplier.id}>
                                         {supplier.name} - {supplier.place}
                                     </option>
                                 ))}
                             </select>
-                            <button className="btn btn-outline-success btn-sm" type="submit">Supply</button>
+                            <button className="btn btn-outline-success btn-sm" type="submit">
+                                Supply
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -284,19 +243,31 @@ function Supply() {
 
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 2: Manufacture</b> (Only a registered Manufacturer can perform this step):</h5>
-                    <form onSubmit={(event) => handlerSubmit(event, 'Manufacturing')} className="mb-4">
+                    <h5 className="card-title">
+                        <b>Step 2: Manufacture</b> (Only a registered Manufacturer can perform this step):
+                    </h5>
+                    <form onSubmit={handlerSubmitManufacturing} className="mb-4">
                         <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <select className="form-select" onChange={handleSupplierChange} required>
-                                <option value="">Select Raw Material Supplier</option>
-                                {filterRms(rawMaterialSuppliers).map((supplier, index) => (
-                                    <option key={index} value={supplier.addr}>
-                                        {supplier.name} - {supplier.place}
+                            <select className="form-select" onChange={handlerChangeID(setManufacturingID, setManufacturingMedicineID)} required>
+                                <option value="">Select ID</option>
+                                {Object.keys(MED).map((key, index) => (
+                                    <option key={index} value={index + 1}>
+                                        {index + 1}
                                     </option>
                                 ))}
                             </select>
-                            <button className="btn btn-outline-success btn-sm" type="submit">Manufacture</button>
+                            <input type="text" className="form-control" value={ManufacturingMedicineID} placeholder="Medicine ID" readOnly />
+                            <select className="form-select" required>
+                                <option value="">Select Manufacturer</option>
+                                {manufacturers.map((manufacturer, index) => (
+                                    <option key={index} value={manufacturer.id}>
+                                        {manufacturer.name} - {manufacturer.place}
+                                    </option>
+                                ))}
+                            </select>
+                            <button className="btn btn-outline-success btn-sm" type="submit">
+                                Manufacture
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -304,19 +275,31 @@ function Supply() {
 
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 3: Distribute</b> (Only a registered Distributor can perform this step):</h5>
-                    <form onSubmit={(event) => handlerSubmit(event, 'Distribute')} className="mb-4">
+                    <h5 className="card-title">
+                        <b>Step 3: Distribute</b> (Only a registered Distributor can perform this step):
+                    </h5>
+                    <form onSubmit={handlerSubmitDistribute} className="mb-4">
                         <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <select className="form-select" onChange={handleSupplierChange} required>
-                                <option value="">Select Raw Material Supplier</option>
-                                {filterRms(rawMaterialSuppliers).map((supplier, index) => (
-                                    <option key={index} value={supplier.addr}>
-                                        {supplier.name} - {supplier.place}
+                            <select className="form-select" onChange={handlerChangeID(setDistributeID, setDistributeMedicineID)} required>
+                                <option value="">Select ID</option>
+                                {Object.keys(MED).map((key, index) => (
+                                    <option key={index} value={index + 1}>
+                                        {index + 1}
                                     </option>
                                 ))}
                             </select>
-                            <button className="btn btn-outline-success btn-sm" type="submit">Distribute</button>
+                            <input type="text" className="form-control" value={DistributeMedicineID} placeholder="Medicine ID" readOnly />
+                            <select className="form-select" required>
+                                <option value="">Select Distributor</option>
+                                {distributors.map((distributor, index) => (
+                                    <option key={index} value={distributor.id}>
+                                        {distributor.name} - {distributor.place}
+                                    </option>
+                                ))}
+                            </select>
+                            <button className="btn btn-outline-success btn-sm" type="submit">
+                                Distribute
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -324,19 +307,31 @@ function Supply() {
 
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 4: Retail</b> (Only a registered Retailer can perform this step):</h5>
-                    <form onSubmit={(event) => handlerSubmit(event, 'Retail')} className="mb-4">
+                    <h5 className="card-title">
+                        <b>Step 4: Retail</b> (Only a registered Retailer can perform this step):
+                    </h5>
+                    <form onSubmit={handlerSubmitRetail} className="mb-4">
                         <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <select className="form-select" onChange={handleSupplierChange} required>
-                                <option value="">Select Raw Material Supplier</option>
-                                {filterRms(rawMaterialSuppliers).map((supplier, index) => (
-                                    <option key={index} value={supplier.addr}>
-                                        {supplier.name} - {supplier.place}
+                            <select className="form-select" onChange={handlerChangeID(setRetailID, setRetailMedicineID)} required>
+                                <option value="">Select ID</option>
+                                {Object.keys(MED).map((key, index) => (
+                                    <option key={index} value={index + 1}>
+                                        {index + 1}
                                     </option>
                                 ))}
                             </select>
-                            <button className="btn btn-outline-success btn-sm" type="submit">Retail</button>
+                            <input type="text" className="form-control" value={RetailMedicineID} placeholder="Medicine ID" readOnly />
+                            <select className="form-select" required>
+                                <option value="">Select Retailer</option>
+                                {retailers.map((retailer, index) => (
+                                    <option key={index} value={retailer.id}>
+                                        {retailer.name} - {retailer.place}
+                                    </option>
+                                ))}
+                            </select>
+                            <button className="btn btn-outline-success btn-sm" type="submit">
+                                Retail
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -344,19 +339,23 @@ function Supply() {
 
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title"><b>Step 5: Mark as sold</b> (Only a registered Retailer can perform this step):</h5>
-                    <form onSubmit={(event) => handlerSubmit(event, 'sold')} className="mb-4">
+                    <h5 className="card-title">
+                        <b>Step 5: Mark as sold</b> (Only a registered Retailer can perform this step):
+                    </h5>
+                    <form onSubmit={handlerSubmitSold} className="mb-4">
                         <div className="input-group mb-3">
-                            <input className="form-control" type="text" onChange={handlerChangeID} placeholder="Enter Medicine ID" required />
-                            <select className="form-select" onChange={handleSupplierChange} required>
-                                <option value="">Select Raw Material Supplier</option>
-                                {filterRms(rawMaterialSuppliers).map((supplier, index) => (
-                                    <option key={index} value={supplier.addr}>
-                                        {supplier.name} - {supplier.place}
+                            <select className="form-select" onChange={handlerChangeID(setSoldID, setSoldMedicineID)} required>
+                                <option value="">Select ID</option>
+                                {Object.keys(MED).map((key, index) => (
+                                    <option key={index} value={index + 1}>
+                                        {index + 1}
                                     </option>
                                 ))}
                             </select>
-                            <button className="btn btn-outline-success btn-sm" type="submit">Sold</button>
+                            <input type="text" className="form-control" value={SoldMedicineID} placeholder="Medicine ID" readOnly />
+                            <button className="btn btn-outline-success btn-sm" type="submit">
+                                Mark as sold
+                            </button>
                         </div>
                     </form>
                 </div>
