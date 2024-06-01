@@ -150,22 +150,19 @@ function Home() {
                         <button onClick={toggleDarkMode} className="btn mb-4">
                             {darkMode ? 'Light Mode' : 'Dark Mode'}
                         </button>
+                        <h3>Medicine Supply Chain Flow</h3>
                         <div className="card">
-                            <h3>Pharmaceutical Supply Chain Flow</h3>
-                            <h6>(Note: Here <u>Owner</u> is the person who deployed the smart contract on the blockchain)</h6>
-                            <h5>Step 1: Owner Should Register Raw material suppliers, Manufacturers, Distributors, and Retailers</h5>
-                            <h6>(Note: This is a one-time step. Skip to step 2 if already done)</h6>
+                            <h5><b>Step 1:</b> Register Raw Material Suppliers, Manufacturers, Distributors, and Pharmacies</h5>
                             <button onClick={redirect_to_roles} className="btn">Register</button>
                         </div>
                         <div className="card">
-                            <h5>Step 2: Owner should order medicines</h5>
+                            <h5><b>Step 2:</b> Order Medicines</h5>
                             <button onClick={redirect_to_addmed} className="btn">Order Medicines</button>
                         </div>
                         <div className="card">
-                            <h5>Step 3: Control Supply Chain</h5>
+                            <h5><b>Step 3:</b> Control Supply Chain</h5>
                             <button onClick={redirect_to_supply} className="btn">Control Supply Chain</button>
                         </div>
-                        <hr />
                         <div className="card">
                             <h5><b>Track</b> the medicines:</h5>
                             <button onClick={redirect_to_track} className="btn">Track Medicines</button>
@@ -176,10 +173,10 @@ function Home() {
             </div>
             <footer className="footer">
                 &copy; 2024 Drug Track System
+                       Developed by Furkan T. İlkay T. Betül E. Enes K.
             </footer>
         </div>
     );
-    
 }    
 const styles = {
     container: {

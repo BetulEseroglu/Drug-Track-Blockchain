@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import Web3 from 'web3';
 import SupplyChainABI from './artifacts/SupplyChain.json';
-import { useRetailers } from './AssignRoles'; // Perakendeci bilgilerini çekmek için import ediyoruz
+import { useRetailers } from './AssignRoles'; 
 import { useManufacturers } from './AssignRoles';
 
 function AddMed() {
     const history = useHistory();
-    const retailers = useRetailers(); // Perakendeci bilgilerini çekiyoruz
+    const retailers = useRetailers(); 
     const [selectedRetailer, setSelectedRetailer] = useState(null);
 
     useEffect(() => {
@@ -23,15 +23,15 @@ function AddMed() {
     const [MedName, setMedName] = useState("");
     const [MedDes, setMedDes] = useState("");
     const [MedID, setMedID] = useState("");
-    const [orderQuantity, setOrderQuantity] = useState(""); // Sipariş adeti için state
-    const [errorMessage, setErrorMessage] = useState(""); // Hata mesajı için state
+    const [orderQuantity, setOrderQuantity] = useState(""); 
+    const [errorMessage, setErrorMessage] = useState(""); 
     const manufacturers = useManufacturers();
 
     const [filterName, setFilterName] = useState("");
     const [filterDescription, setFilterDescription] = useState("");
     const [filterStage, setFilterStage] = useState("");
     const [filterID, setFilterID] = useState("");
-    const [filterRetailer, setFilterRetailer] = useState(""); // Perakendeci filtresi için state
+    const [filterRetailer, setFilterRetailer] = useState(""); 
     const [filterOrderQuantity, setFilterOrderQuantity] = useState("");
 
     const medicineData = {
@@ -90,7 +90,7 @@ function AddMed() {
                     RETid: medicine.RETid,
                     stage: medicine.stage,
                     retailer: medicine.retailer,
-                    orderQuantity: medicine.orderQuantity // Sipariş adeti eklendi
+                    orderQuantity: medicine.orderQuantity 
                 };
                 medStage[i] = await supplychain.methods.showStage(i + 1).call();
             }
@@ -124,7 +124,7 @@ function AddMed() {
         event.preventDefault();
         const stock = getStockForMedicine(MedName);
         if (parseInt(orderQuantity) > stock) {
-            setErrorMessage('Stok yok');
+            setErrorMessage('No Stock');
             return;
         }
         try {
@@ -133,15 +133,15 @@ function AddMed() {
                 MedDes, 
                 MedID,
                 selectedRetailer.name,
-                orderQuantity // Sipariş adeti parametresi eklendi
+                orderQuantity 
             ).send({ from: currentaccount });
             if (reciept) {
                 loadBlockchaindata();
-                setErrorMessage(''); // Hata mesajını temizle
+                setErrorMessage(''); 
             }
         } catch (err) {
             console.error(err);
-            setErrorMessage('Bir hata oluştu!!!');
+            setErrorMessage('An error occurred!!!');
         }
     };    
 
@@ -197,7 +197,7 @@ function AddMed() {
                 </div>
                 <div className="mb-3">
                     <select className="form-control" value={selectedRetailer ? selectedRetailer.name : ''} onChange={handlerChangeRetailer} required>
-                        <option value="">Select Retailer</option>
+                        <option value="">Select Pharmacy</option>
                         {retailers.map((retailer, index) => (
                             <option key={index} value={retailer.name}>{retailer.name}</option>
                         ))}
@@ -252,11 +252,11 @@ function AddMed() {
                             />
                         </th>
                         <th scope="col">
-                            Retailer
+                            Pharmacy
                             <input
                                 type="text"
                                 className="form-control form-control-sm"
-                                placeholder="Filter Retailer"
+                                placeholder="Filter Pharmacy"
                                 value={filterRetailer}
                                 onChange={(e) => setFilterRetailer(e.target.value)}
                             />
@@ -281,7 +281,7 @@ function AddMed() {
                             <td>{MED[key].description}</td>
                             <td>{MedStage[key]}</td>
                             <td>{MED[key].retailer}</td>
-                            <td>{MED[key].orderQuantity}</td> {/* Sipariş Adeti */}
+                            <td>{MED[key].orderQuantity}</td>
                         </tr>
                     ))}
                 </tbody>

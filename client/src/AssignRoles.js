@@ -256,8 +256,7 @@ function AssignRoles() {
         if (networkData) {
             const supplychain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
             setSupplyChain(supplychain);
-    
-            // RMS Data
+
             const rmsCtr = await supplychain.methods.rmsCtr().call();
             const rmsCount = web3.utils.toBN(rmsCtr).toNumber();
             const rms = {};
@@ -266,7 +265,6 @@ function AssignRoles() {
             }
             setRMS(rms);
     
-            // MAN Data
             const manCtr = await supplychain.methods.manCtr().call();
             const manCount = web3.utils.toBN(manCtr).toNumber();
             const man = {};
@@ -274,16 +272,15 @@ function AssignRoles() {
             for (let i = 0; i < manCount; i++) {
                 const manufacturer = await supplychain.methods.MAN(i + 1).call();
                 const medicineName = manufacturer.drugName;
-                manufacturer.drugName = medicineName;  // Adjusting drug name
-                manufacturer.drugId = medicineData[medicineName]?.id || manufacturer.drugId;  // Adjusting drug ID
-                manufacturer.stock = manufacturer.stock || 0;  // Ensure stock is not undefined
+                manufacturer.drugName = medicineName;  
+                manufacturer.drugId = medicineData[medicineName]?.id || manufacturer.drugId; 
+                manufacturer.stock = manufacturer.stock || 0; 
                 man[i] = manufacturer;
                 serialNumbersSet.add(manufacturer.serialNumber);
             }
             setMAN(man);
             setSerialNumbers(serialNumbersSet);
     
-            // DIS Data
             const disCtr = await supplychain.methods.disCtr().call();
             const disCount = web3.utils.toBN(disCtr).toNumber();
             const dis = {};
@@ -292,7 +289,6 @@ function AssignRoles() {
             }
             setDIS(dis);
     
-            // RET Data
             const retCtr = await supplychain.methods.retCtr().call();
             const retCount = web3.utils.toBN(retCtr).toNumber();
             const ret = {};
@@ -315,7 +311,7 @@ function AssignRoles() {
         event.preventDefault();
     
         if (serialNumbers.has(serialNumber)) {
-            alert('Bu seri numarası zaten kullanılıyor. Lütfen başka bir seri numarası kullanın.');
+            alert('This serial number is already in use. Please use another serial number.');
             return;
         }
     
@@ -336,10 +332,10 @@ function AssignRoles() {
                 }
             } catch (err) {
                 console.error(err);
-                alert('Bir hata oluştu!!!');
+                alert('An error occurred!!!');
             }
         } else {
-            alert('Lütfen doğru doğrulama kodunu girin.');
+            alert('Please enter the correct verification code.');
         }
     };    
 
@@ -348,11 +344,11 @@ function AssignRoles() {
         try {
             const receipt = await SupplyChain.methods.addRMS(RMSaddress, RMSname, RMSplace).send({ from: currentaccount });
             if (receipt) {
-                loadBlockchainData(); // Verileri yeniden yükle
+                loadBlockchainData(); 
             }
         } catch (err) {
             console.error(err);
-            alert('Bir hata oluştu!!!');
+            alert('An error occurred!!!');
         }
     };
 
@@ -375,14 +371,14 @@ function AssignRoles() {
         setIsCodeValid(true);
         setTimeout(() => {
             setIsCodeValid(false);
-            alert('Doğrulama kodu süresi doldu. Lütfen tekrar deneyin.');
+            alert('Verification code has expired. Please try again.');
         }, 120000); // 2 dakika geçerli
         return code;
     };
 
     const generateQRCodeValue = async () => {
         if (serialNumbers.has(serialNumber)) {
-            alert('Bu seri numarası zaten kullanılıyor. Lütfen başka bir seri numarası kullanın.');
+            alert('This serial number is already in use. Please use another serial number.');
             return;
         }
         const code = generateVerificationCode();
@@ -397,7 +393,7 @@ function AssignRoles() {
                 loadBlockchainData();
             }
         } catch (err) {
-            alert('Bir hata oluştu!!!');
+            alert('An error occurred!!!');
         }
     };
 
@@ -409,7 +405,7 @@ function AssignRoles() {
                 loadBlockchainData();
             }
         } catch (err) {
-            alert('Bir hata oluştu!!!');
+            alert('An error occurred!!!');
         }
     };
 
@@ -457,31 +453,31 @@ function AssignRoles() {
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <span><b>Mevcut Hesap Adresi:</b> {currentaccount}</span>
-                <button onClick={redirect_to_home} className="btn btn-outline-danger btn-sm">ANA SAYFA</button>
+                <span><b>Current Account Address:</b> {currentaccount}</span>
+                <button onClick={redirect_to_home} className="btn btn-outline-danger btn-sm">HOME</button>
             </div>
 
-            <h4>Ham Madde Tedarikçileri:</h4>
+            <h4>Raw Material Suppliers:</h4>
             <form onSubmit={handlerSubmitRMS} className="mb-4">
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeAddressRMS} placeholder="Ethereum Adresi" required />
+                    <input className="form-control" type="text" onChange={handlerChangeAddressRMS} placeholder="Ethereum Address" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeNameRMS} placeholder="Ham Madde Tedarikçi Adı" required />
+                    <input className="form-control" type="text" onChange={handlerChangeNameRMS} placeholder="Raw Material Supplier Name" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangePlaceRMS} placeholder="Konum" required />
+                    <input className="form-control" type="text" onChange={handlerChangePlaceRMS} placeholder="Location" required />
                 </div>
-                <button className="btn btn-outline-success btn-sm" type="submit">Kayıt</button>
+                <button className="btn btn-outline-success btn-sm" type="submit">Register</button>
             </form>
 
             <table className="table table-striped table-hover table-sm mb-4">
                 <thead className="table-dark">
                     <tr>
                         <th scope="col">ID</th>
-                        <th scope="col">Adı</th>
-                        <th scope="col">Konum</th>
-                        <th scope="col">Ethereum Adresi</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Ethereum Address</th>
                     </tr>
                     <tr>
                         <th>
@@ -489,7 +485,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="id"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={rmsFilter.id}
                                 onChange={handleRmsFilterChange}
                             />
@@ -499,7 +495,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="name"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={rmsFilter.name}
                                 onChange={handleRmsFilterChange}
                             />
@@ -509,7 +505,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="place"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={rmsFilter.place}
                                 onChange={handleRmsFilterChange}
                             />
@@ -519,7 +515,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="addr"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={rmsFilter.addr}
                                 onChange={handleRmsFilterChange}
                             />
@@ -538,16 +534,16 @@ function AssignRoles() {
                 </tbody>
             </table>
 
-            <h4>Üreticiler:</h4>
+            <h4>Manufacturer:</h4>
             <form onSubmit={handlerSubmitMAN} className="mb-4">
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeAddressMAN} placeholder="Ethereum Adresi" required />
+                    <input className="form-control" type="text" onChange={handlerChangeAddressMAN} placeholder="Ethereum Address" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeNameMAN} placeholder="Üretici Adı" required />
+                    <input className="form-control" type="text" onChange={handlerChangeNameMAN} placeholder="Manufacturer Name" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangePlaceMAN} placeholder="Konum" required />
+                    <input className="form-control" type="text" onChange={handlerChangePlaceMAN} placeholder="Location" required />
                 </div>
                 <div className="mb-3">
                     <select className="form-control" value={MANdrugName} onChange={(e) => {
@@ -569,24 +565,24 @@ function AssignRoles() {
                     <input className="form-control" type="text" value={MANdrugID} placeholder="Medicine ID" readOnly />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handleSerialNumberChange} placeholder="Seri Numarası" required />
+                    <input className="form-control" type="text" onChange={handleSerialNumberChange} placeholder="Serial Number" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="number" onChange={(e) => setStock(e.target.value)} placeholder="Stok Bilgisi" required />
+                    <input className="form-control" type="number" onChange={(e) => setStock(e.target.value)} placeholder="Stock Quantity" required />
                 </div>
                 <div className="mb-3">
-                    <button type="button" onClick={generateQRCodeValue} className="btn btn-outline-primary btn-sm">QR Kod Oluştur</button>
+                    <button type="button" onClick={generateQRCodeValue} className="btn btn-outline-primary btn-sm">Create QR Code</button>
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handleCodeChange} placeholder="Doğrulama Kodu" required />
+                    <input className="form-control" type="text" onChange={handleCodeChange} placeholder="Verification Code" required />
                 </div>
-                <button className="btn btn-outline-success btn-sm" type="submit" disabled={!isCodeValid}>Kayıt</button>
+                <button className="btn btn-outline-success btn-sm" type="submit" disabled={!isCodeValid}>Register</button>
             </form>
 
     
             {serialNumber && verificationCode && (
                 <div>
-                    <h5>QR Kod:</h5>
+                    <h5>QR Code:</h5>
                     <QRCodeGenerator value={qrCodeValue} />
                 </div>
             )}
@@ -595,13 +591,13 @@ function AssignRoles() {
                 <thead className="table-dark">
                     <tr>
                         <th scope="col">ID</th>
-                        <th scope="col">Adı</th>
-                        <th scope="col">Konum</th>
-                        <th scope="col">Ethereum Adresi</th>
-                        <th scope="col">İlaç ID</th>
-                        <th scope="col">İlaç Adı</th>
-                        <th scope="col">Seri Numarası</th>
-                        <th scope="col">Stok</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Ethereum Address</th>
+                        <th scope="col">Medicine ID</th>
+                        <th scope="col">Medicine Name</th>
+                        <th scope="col">Serial Number</th>
+                        <th scope="col">Stock</th>
                     </tr>
                     <tr>
                         <th>
@@ -609,7 +605,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="id"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={manFilter.id}
                                 onChange={handleManFilterChange}
                             />
@@ -619,7 +615,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="name"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={manFilter.name}
                                 onChange={handleManFilterChange}
                             />
@@ -629,7 +625,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="place"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={manFilter.place}
                                 onChange={handleManFilterChange}
                             />
@@ -639,7 +635,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="addr"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={manFilter.addr}
                                 onChange={handleManFilterChange}
                             />
@@ -649,7 +645,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="drugId"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={manFilter.drugId}
                                 onChange={handleManFilterChange}
                             />
@@ -659,7 +655,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="drugName"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={manFilter.drugName}
                                 onChange={handleManFilterChange}
                             />
@@ -669,7 +665,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="serialNumber"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={manFilter.serialNumber}
                                 onChange={handleManFilterChange}
                             />
@@ -679,7 +675,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="stock"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={manFilter.stock}
                                 onChange={handleManFilterChange}
                             />
@@ -702,27 +698,27 @@ function AssignRoles() {
                 </tbody>
             </table>
 
-            <h4>Distribütörler:</h4>
+            <h4>Distributors:</h4>
             <form onSubmit={handlerSubmitDIS} className="mb-4">
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeAddressDIS} placeholder="Ethereum Adresi" required />
+                    <input className="form-control" type="text" onChange={handlerChangeAddressDIS} placeholder="Ethereum Address" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeNameDIS} placeholder="Distribütör Adı" required />
+                    <input className="form-control" type="text" onChange={handlerChangeNameDIS} placeholder="Distributor Name" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangePlaceDIS} placeholder="Konum" required />
+                    <input className="form-control" type="text" onChange={handlerChangePlaceDIS} placeholder="Location" required />
                 </div>
-                <button className="btn btn-outline-success btn-sm" type="submit">Kayıt</button>
+                <button className="btn btn-outline-success btn-sm" type="submit">Register</button>
             </form>
 
             <table className="table table-striped table-hover table-sm mb-4">
                 <thead className="table-dark">
                     <tr>
                         <th scope="col">ID</th>
-                        <th scope="col">Adı</th>
-                        <th scope="col">Konum</th>
-                        <th scope="col">Ethereum Adresi</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Ethereum Address</th>
                     </tr>
                     <tr>
                         <th>
@@ -730,7 +726,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="id"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={disFilter.id}
                                 onChange={handleDisFilterChange}
                             />
@@ -740,7 +736,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="name"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={disFilter.name}
                                 onChange={handleDisFilterChange}
                             />
@@ -750,7 +746,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="place"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={disFilter.place}
                                 onChange={handleDisFilterChange}
                             />
@@ -760,7 +756,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="addr"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={disFilter.addr}
                                 onChange={handleDisFilterChange}
                             />
@@ -779,27 +775,27 @@ function AssignRoles() {
                 </tbody>
             </table>
 
-            <h4>Perakendeciler:</h4>
+            <h4>Pharmacies:</h4>
             <form onSubmit={handlerSubmitRET} className="mb-4">
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeAddressRET} placeholder="Ethereum Adresi" required />
+                    <input className="form-control" type="text" onChange={handlerChangeAddressRET} placeholder="Ethereum Address" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangeNameRET} placeholder="Perakendeci Adı" required />
+                    <input className="form-control" type="text" onChange={handlerChangeNameRET} placeholder="Pharmacy Name" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={handlerChangePlaceRET} placeholder="Konum" required />
+                    <input className="form-control" type="text" onChange={handlerChangePlaceRET} placeholder="Location" required />
                 </div>
-                <button className="btn btn-outline-success btn-sm" type="submit">Kayıt</button>
+                <button className="btn btn-outline-success btn-sm" type="submit">Register</button>
             </form>
 
             <table className="table table-striped table-hover table-sm mb-4">
                 <thead className="table-dark">
                     <tr>
                         <th scope="col">ID</th>
-                        <th scope="col">Adı</th>
-                        <th scope="col">Konum</th>
-                        <th scope="col">Ethereum Adresi</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Ethereum Address</th>
                     </tr>
                     <tr>
                         <th>
@@ -807,7 +803,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="id"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={retFilter.id}
                                 onChange={handleRetFilterChange}
                             />
@@ -817,7 +813,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="name"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={retFilter.name}
                                 onChange={handleRetFilterChange}
                             />
@@ -827,7 +823,7 @@ function AssignRoles() {
                                 className="form-control form-control-sm"
                                 type="text"
                                 name="place"
-                                placeholder="Filtre"
+                                placeholder="Filter"
                                 value={retFilter.place}
                                 onChange={handleRetFilterChange}
                             />

@@ -379,19 +379,14 @@ function Track() {
         if (!((ID > 0) && (ID <= ctr)))
             alert("Invalid Medicine ID!!!");
         else {
-            // eslint-disable-next-line
             if (MED[ID].stage == 5)
                 showTrackTillSold(true);
-            // eslint-disable-next-line
             else if (MED[ID].stage == 4)
                 showTrackTillRetail(true);
-            // eslint-disable-next-line
             else if (MED[ID].stage == 3)
                 showTrackTillDistribution(true);
-            // eslint-disable-next-line
             else if (MED[ID].stage == 2)
                 showTrackTillManufacture(true);
-            // eslint-disable-next-line
             else if (MED[ID].stage == 1)
                 showTrackTillRMS(true);
             else

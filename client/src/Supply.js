@@ -181,7 +181,7 @@ function Supply() {
                 <b>Supply Chain Flow:</b>
             </h6>
             <p>
-                Medicine Order -&gt; Raw Material Supplier -&gt; Manufacturer -&gt; Distributor -&gt; Retailer -&gt; Consumer
+                Medicine Order -&gt; Raw Material Supplier -&gt; Manufacturer -&gt; Distributor -&gt; Pharmacy -&gt; Consumer
             </p>
 
             <table className="table table-striped table-hover table-sm mb-4">
@@ -212,7 +212,7 @@ function Supply() {
             <div className="card mb-4">
                 <div className="card-body">
                     <h5 className="card-title">
-                        <b>Step 1: Supply Raw Materials</b> (Only a registered Raw Material Supplier can perform this step):
+                        <b>Step 1: Supply Raw Materials</b>:
                     </h5>
                     <form onSubmit={handlerSubmitRMSsupply} className="mb-4">
                         <div className="input-group mb-3">
@@ -244,7 +244,7 @@ function Supply() {
             <div className="card mb-4">
                 <div className="card-body">
                     <h5 className="card-title">
-                        <b>Step 2: Manufacture</b> (Only a registered Manufacturer can perform this step):
+                        <b>Step 2: Manufacture</b>:
                     </h5>
                     <form onSubmit={handlerSubmitManufacturing} className="mb-4">
                         <div className="input-group mb-3">
@@ -276,7 +276,7 @@ function Supply() {
             <div className="card mb-4">
                 <div className="card-body">
                     <h5 className="card-title">
-                        <b>Step 3: Distribute</b> (Only a registered Distributor can perform this step):
+                        <b>Step 3: Distribute</b>:
                     </h5>
                     <form onSubmit={handlerSubmitDistribute} className="mb-4">
                         <div className="input-group mb-3">
@@ -308,7 +308,7 @@ function Supply() {
             <div className="card mb-4">
                 <div className="card-body">
                     <h5 className="card-title">
-                        <b>Step 4: Retail</b> (Only a registered Retailer can perform this step):
+                        <b>Step 4: Pharmacy</b>:
                     </h5>
                     <form onSubmit={handlerSubmitRetail} className="mb-4">
                         <div className="input-group mb-3">
@@ -322,7 +322,7 @@ function Supply() {
                             </select>
                             <input type="text" className="form-control" value={RetailMedicineID} placeholder="Medicine ID" readOnly />
                             <select className="form-select" required>
-                                <option value="">Select Retailer</option>
+                                <option value="">Select Pharmacy</option>
                                 {retailers.map((retailer, index) => (
                                     <option key={index} value={retailer.id}>
                                         {retailer.name} - {retailer.place}
@@ -340,7 +340,7 @@ function Supply() {
             <div className="card mb-4">
                 <div className="card-body">
                     <h5 className="card-title">
-                        <b>Step 5: Mark as sold</b> (Only a registered Retailer can perform this step):
+                        <b>Step 5: Mark as sold</b>:
                     </h5>
                     <form onSubmit={handlerSubmitSold} className="mb-4">
                         <div className="input-group mb-3">
