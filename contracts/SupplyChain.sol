@@ -38,6 +38,7 @@ contract SupplyChain {
         uint256 RETid;
         STAGE stage;
         string retailer;
+        uint256 orderQuantity; // Yeni alan
     }
 
     mapping(uint256 => medicine) public MedicineStock;
@@ -219,7 +220,8 @@ contract SupplyChain {
         string memory _name,
         string memory _description,
         string memory _id,
-        string memory _retailer
+        string memory _retailer,
+        uint256 _orderQuantity // Yeni parametre
     ) public onlyByOwner() {
         require((rmsCtr > 0) && (manCtr > 0) && (disCtr > 0) && (retCtr > 0));
         medicineCtr++;
@@ -232,7 +234,8 @@ contract SupplyChain {
             0,
             0,
             STAGE.Init,
-            _retailer
+            _retailer,
+            _orderQuantity // Sipariş adeti burada kaydediliyor
         );
     }
 }

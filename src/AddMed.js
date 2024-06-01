@@ -32,6 +32,7 @@ function AddMed() {
     const [filterStage, setFilterStage] = useState("");
     const [filterID, setFilterID] = useState("");
     const [filterRetailer, setFilterRetailer] = useState(""); // Perakendeci filtresi için state
+    const [filterOrderQuantity, setFilterOrderQuantity] = useState("");
 
     const medicineData = {
         Aspirin: { id: 'A278593', description: 'Pain Reliever' },
@@ -78,7 +79,19 @@ function AddMed() {
             const med = {};
             const medStage = [];
             for (i = 0; i < medCtr; i++) {
-                med[i] = await supplychain.methods.MedicineStock(i + 1).call();
+                const medicine = await supplychain.methods.MedicineStock(i + 1).call();
+                med[i] = {
+                    id: medicine.id,
+                    name: medicine.name,
+                    description: medicine.description,
+                    RMSid: medicine.RMSid,
+                    MANid: medicine.MANid,
+                    DISid: medicine.DISid,
+                    RETid: medicine.RETid,
+                    stage: medicine.stage,
+                    retailer: medicine.retailer,
+                    orderQuantity: medicine.orderQuantity // Sipariş adeti eklendi
+                };
                 medStage[i] = await supplychain.methods.showStage(i + 1).call();
             }
             setMED(med);
@@ -88,6 +101,7 @@ function AddMed() {
             window.alert('The smart contract is not deployed to current network');
         }
     };
+    
 
     const handlerChangeNameMED = (event) => {
         const selectedMedName = event.target.value;
@@ -118,7 +132,8 @@ function AddMed() {
                 MedName, 
                 MedDes, 
                 MedID,
-                selectedRetailer.name
+                selectedRetailer.name,
+                orderQuantity // Sipariş adeti parametresi eklendi
             ).send({ from: currentaccount });
             if (reciept) {
                 loadBlockchaindata();
@@ -128,7 +143,7 @@ function AddMed() {
             console.error(err);
             setErrorMessage('Bir hata oluştu!!!');
         }
-    };
+    };    
 
     if (loader) {
         return (
@@ -148,7 +163,8 @@ function AddMed() {
             (filterName === "" || med.name.toLowerCase().includes(filterName.toLowerCase())) &&
             (filterDescription === "" || med.description.toLowerCase().includes(filterDescription.toLowerCase())) &&
             (filterStage === "" || MedStage[key].toLowerCase().includes(filterStage.toLowerCase())) &&
-            (filterRetailer === "" || med.retailer.toLowerCase().includes(filterRetailer.toLowerCase()))
+            (filterRetailer === "" || med.retailer.toLowerCase().includes(filterRetailer.toLowerCase())) &&
+            (filterOrderQuantity === "" || med.orderQuantity.toString().includes(filterOrderQuantity))
         );
     });
 
@@ -158,7 +174,7 @@ function AddMed() {
                 <span><b>Current Account Address:</b> {currentaccount}</span>
                 <button onClick={redirect_to_home} className="btn btn-outline-danger btn-sm">HOME</button>
             </div>
-
+    
             <h4>Add Medicine Order:</h4>
             <form onSubmit={handlerSubmitMED} className="mb-4">
                 <div className="mb-3">
@@ -189,7 +205,7 @@ function AddMed() {
                 {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
                 <button className="btn btn-outline-success btn-sm" type="submit">Order</button>
             </form>
-
+    
             <h4>Ordered Medicines:</h4>
             <table className="table table-striped table-hover table-sm mb-4">
                 <thead className="table-dark">
@@ -244,6 +260,16 @@ function AddMed() {
                                 onChange={(e) => setFilterRetailer(e.target.value)}
                             />
                         </th>
+                        <th scope="col">
+                            Order Quantity
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Order Quantity"
+                                value={filterOrderQuantity}
+                                onChange={(e) => setFilterOrderQuantity(e.target.value)}
+                            />
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -253,13 +279,14 @@ function AddMed() {
                             <td>{MED[key].name}</td>
                             <td>{MED[key].description}</td>
                             <td>{MedStage[key]}</td>
-                            <td>{MED[key].retailer}</td> {/* Perakendeci Bilgisi */}
+                            <td>{MED[key].retailer}</td>
+                            <td>{MED[key].orderQuantity}</td> {/* Sipariş Adeti */}
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
-    );
+    );    
 }
 
 export default AddMed;
