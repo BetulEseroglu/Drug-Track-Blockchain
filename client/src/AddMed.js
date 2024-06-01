@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import Web3 from 'web3';
 import SupplyChainABI from './artifacts/SupplyChain.json';
-import { useRetailers } from './AssignRoles'; 
+import { useRetailers } from './AssignRoles'; // Perakendeci bilgilerini çekmek için import ediyoruz
+import { useManufacturers } from './AssignRoles';
 
 function AddMed() {
     const history = useHistory();
@@ -22,11 +23,16 @@ function AddMed() {
     const [MedName, setMedName] = useState("");
     const [MedDes, setMedDes] = useState("");
     const [MedID, setMedID] = useState("");
+    const [orderQuantity, setOrderQuantity] = useState(""); // Sipariş adeti için state
+    const [errorMessage, setErrorMessage] = useState(""); // Hata mesajı için state
+    const manufacturers = useManufacturers();
+
     const [filterName, setFilterName] = useState("");
     const [filterDescription, setFilterDescription] = useState("");
     const [filterStage, setFilterStage] = useState("");
     const [filterID, setFilterID] = useState("");
     const [filterRetailer, setFilterRetailer] = useState(""); // Perakendeci filtresi için state
+    const [filterOrderQuantity, setFilterOrderQuantity] = useState("");
 
     const medicineData = {
         Aspirin: { id: 'A278593', description: 'Pain Reliever' },
@@ -39,6 +45,11 @@ function AddMed() {
         Aprol: { id: 'A456789', description: 'Pain Reliever' },
         Dikloron: { id: 'D567890', description: 'Pain Reliever' },
         Cipralex: { id: 'C678901', description: 'Antidepressant' }
+    };
+    
+    const getStockForMedicine = (medicineName) => {
+        const manufacturer = manufacturers.find(man => man.drugName === medicineName);
+        return manufacturer ? manufacturer.stock : 0;
     };
 
     const loadWeb3 = async () => {
@@ -68,7 +79,19 @@ function AddMed() {
             const med = {};
             const medStage = [];
             for (i = 0; i < medCtr; i++) {
-                med[i] = await supplychain.methods.MedicineStock(i + 1).call();
+                const medicine = await supplychain.methods.MedicineStock(i + 1).call();
+                med[i] = {
+                    id: medicine.id,
+                    name: medicine.name,
+                    description: medicine.description,
+                    RMSid: medicine.RMSid,
+                    MANid: medicine.MANid,
+                    DISid: medicine.DISid,
+                    RETid: medicine.RETid,
+                    stage: medicine.stage,
+                    retailer: medicine.retailer,
+                    orderQuantity: medicine.orderQuantity // Sipariş adeti eklendi
+                };
                 medStage[i] = await supplychain.methods.showStage(i + 1).call();
             }
             setMED(med);
@@ -78,6 +101,7 @@ function AddMed() {
             window.alert('The smart contract is not deployed to current network');
         }
     };
+    
 
     const handlerChangeNameMED = (event) => {
         const selectedMedName = event.target.value;
@@ -92,23 +116,34 @@ function AddMed() {
         setSelectedRetailer(retailer);
     };
 
+    const handlerChangeOrderQuantity = (event) => {
+        setOrderQuantity(event.target.value);
+    };
+
     const handlerSubmitMED = async (event) => {
         event.preventDefault();
+        const stock = getStockForMedicine(MedName);
+        if (parseInt(orderQuantity) > stock) {
+            setErrorMessage('Stok yok');
+            return;
+        }
         try {
             var reciept = await SupplyChain.methods.addMedicine(
                 MedName, 
                 MedDes, 
                 MedID,
-                selectedRetailer.name 
+                selectedRetailer.name,
+                orderQuantity // Sipariş adeti parametresi eklendi
             ).send({ from: currentaccount });
             if (reciept) {
                 loadBlockchaindata();
+                setErrorMessage(''); // Hata mesajını temizle
             }
         } catch (err) {
             console.error(err);
-            alert('An error occurred!!!');
+            setErrorMessage('Bir hata oluştu!!!');
         }
-    };
+    };    
 
     if (loader) {
         return (
@@ -125,14 +160,14 @@ function AddMed() {
     const filteredMED = Object.keys(MED).filter(key => {
         const med = MED[key];
         return (
-            (filterID === "" || (parseInt(key) + 1).toString().includes(filterID) || med.id.toLowerCase().includes(filterID.toLowerCase())) && // ID filtresi
+            (filterID === "" || (parseInt(key) + 1).toString().includes(filterID) || med.id.toLowerCase().includes(filterID.toLowerCase())) && 
             (filterName === "" || med.name.toLowerCase().includes(filterName.toLowerCase())) &&
             (filterDescription === "" || med.description.toLowerCase().includes(filterDescription.toLowerCase())) &&
             (filterStage === "" || MedStage[key].toLowerCase().includes(filterStage.toLowerCase())) &&
-            (filterRetailer === "" || med.retailer.toLowerCase().includes(filterRetailer.toLowerCase()))
+            (filterRetailer === "" || med.retailer.toLowerCase().includes(filterRetailer.toLowerCase())) &&
+            (filterOrderQuantity === "" || med.orderQuantity.toString().includes(filterOrderQuantity))
         );
     });
-    
 
     return (
         <div className="container mt-4">
@@ -140,7 +175,7 @@ function AddMed() {
                 <span><b>Current Account Address:</b> {currentaccount}</span>
                 <button onClick={redirect_to_home} className="btn btn-outline-danger btn-sm">HOME</button>
             </div>
-
+    
             <h4>Add Medicine Order:</h4>
             <form onSubmit={handlerSubmitMED} className="mb-4">
                 <div className="mb-3">
@@ -158,6 +193,9 @@ function AddMed() {
                     <input className="form-control" type="text" value={MedID} placeholder="Medicine ID" readOnly />
                 </div>
                 <div className="mb-3">
+                    <input className="form-control" type="number" value={orderQuantity} onChange={handlerChangeOrderQuantity} placeholder="Order Quantity" required />
+                </div>
+                <div className="mb-3">
                     <select className="form-control" value={selectedRetailer ? selectedRetailer.name : ''} onChange={handlerChangeRetailer} required>
                         <option value="">Select Retailer</option>
                         {retailers.map((retailer, index) => (
@@ -165,92 +203,91 @@ function AddMed() {
                         ))}
                     </select>
                 </div>
+                {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
                 <button className="btn btn-outline-success btn-sm" type="submit">Order</button>
             </form>
-
+    
             <h4>Ordered Medicines:</h4>
             <table className="table table-striped table-hover table-sm mb-4">
-            <thead className="table-dark">
-                <tr>
-                    <th scope="col">
-                        ID
-                        <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Filter ID"
-                            value={filterID}
-                            onChange={(e) => setFilterID(e.target.value)}
-                        />
-                    </th> 
-                    <th scope="col">
-                        Medicine ID
-                        <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Filter Medicine ID"
-                            value={filterID}
-                            onChange={(e) => setFilterID(e.target.value)}
-                        />
-                    </th>
-                    <th scope="col">
-                        Name
-                        <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Filter Name"
-                            value={filterName}
-                            onChange={(e) => setFilterName(e.target.value)}
-                        />
-                    </th>
-                    <th scope="col">
-                        Description
-                        <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Filter Description"
-                            value={filterDescription}
-                            onChange={(e) => setFilterDescription(e.target.value)}
-                        />
-                    </th>
-                    <th scope="col">
-                        Current Stage
-                        <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Filter Stage"
-                            value={filterStage}
-                            onChange={(e) => setFilterStage(e.target.value)}
-                        />
-                    </th>
-                    <th scope="col">
-                        Retailer
-                        <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Filter Retailer"
-                            value={filterRetailer}
-                            onChange={(e) => setFilterRetailer(e.target.value)}
-                        />
-                    </th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {filteredMED.map((key, index) => (
-                    <tr key={key}>
-                        <td>{index + 1}</td> 
-                        <td>{medicineData[MED[key].name]?.id || MED[key].id}</td>
-                        <td>{MED[key].name}</td>
-                        <td>{MED[key].description}</td>
-                        <td>{MedStage[key]}</td>
-                        <td>{MED[key].retailer}</td>
+                <thead className="table-dark">
+                    <tr>
+                        <th scope="col">
+                            ID
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter ID"
+                                value={filterID}
+                                onChange={(e) => setFilterID(e.target.value)}
+                            />
+                        </th>
+                        <th scope="col">
+                            Name
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Name"
+                                value={filterName}
+                                onChange={(e) => setFilterName(e.target.value)}
+                            />
+                        </th>
+                        <th scope="col">
+                            Description
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Description"
+                                value={filterDescription}
+                                onChange={(e) => setFilterDescription(e.target.value)}
+                            />
+                        </th>
+                        <th scope="col">
+                            Current Stage
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Stage"
+                                value={filterStage}
+                                onChange={(e) => setFilterStage(e.target.value)}
+                            />
+                        </th>
+                        <th scope="col">
+                            Retailer
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Retailer"
+                                value={filterRetailer}
+                                onChange={(e) => setFilterRetailer(e.target.value)}
+                            />
+                        </th>
+                        <th scope="col">
+                            Order Quantity
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Filter Order Quantity"
+                                value={filterOrderQuantity}
+                                onChange={(e) => setFilterOrderQuantity(e.target.value)}
+                            />
+                        </th>
                     </tr>
-                ))}
-            </tbody>
-
+                </thead>
+                <tbody>
+                    {filteredMED.map((key) => (
+                        <tr key={key}>
+                            <td>{medicineData[MED[key].name]?.id || MED[key].id}</td>
+                            <td>{MED[key].name}</td>
+                            <td>{MED[key].description}</td>
+                            <td>{MedStage[key]}</td>
+                            <td>{MED[key].retailer}</td>
+                            <td>{MED[key].orderQuantity}</td> {/* Sipariş Adeti */}
+                        </tr>
+                    ))}
+                </tbody>
             </table>
         </div>
-    );
+    );    
 }
 
 export default AddMed;

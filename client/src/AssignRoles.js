@@ -4,30 +4,29 @@ import SupplyChainABI from './artifacts/SupplyChain.json';
 import { useHistory } from 'react-router-dom';
 import QRCodeGenerator from './QRCodeGenerator';
 
-export function useRawMaterialSuppliers() {
-    const [rawMaterialSuppliers, setRawMaterialSuppliers] = useState([]);
-
+export function useDistributors() {
+    const [distributors, setDistributors] = useState([]);
     useEffect(() => {
-        const loadRawMaterialSuppliers = async () => {
+        const loadDistributors = async () => {
             const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
             const networkId = await web3.eth.net.getId();
             const networkData = SupplyChainABI.networks[networkId];
             if (networkData) {
                 const supplyChain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
-                const rmsCtr = await supplyChain.methods.rmsCtr().call();
-                const rms = [];
-                for (let i = 0; i < rmsCtr; i++) {
-                    const rawMaterialSupplier = await supplyChain.methods.RMS(i + 1).call();
-                    rms.push(rawMaterialSupplier);
+                const disCtr = await supplyChain.methods.disCtr().call();
+                const dis = [];
+                for (let i = 0; i < disCtr; i++) {
+                    const distributor = await supplyChain.methods.DIS(i + 1).call();
+                    dis.push(distributor);
                 }
-                setRawMaterialSuppliers(rms);
+                setDistributors(dis);
             }
         };
-        loadRawMaterialSuppliers();
+        loadDistributors();
     }, []);
-
-    return rawMaterialSuppliers;
+    return distributors;
 }
+
 export function useManufacturers() {
     const [manufacturers, setManufacturers] = useState([]);
 
@@ -49,33 +48,7 @@ export function useManufacturers() {
         };
         loadManufacturers();
     }, []);
-
     return manufacturers;
-}
-
-export function useDistributors() {
-    const [distributors, setDistributors] = useState([]);
-
-    useEffect(() => {
-        const loadDistributors = async () => {
-            const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
-            const networkId = await web3.eth.net.getId();
-            const networkData = SupplyChainABI.networks[networkId];
-            if (networkData) {
-                const supplyChain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
-                const disCtr = await supplyChain.methods.disCtr().call();
-                const dis = [];
-                for (let i = 0; i < disCtr; i++) {
-                    const distributor = await supplyChain.methods.DIS(i + 1).call();
-                    dis.push(distributor);
-                }
-                setDistributors(dis);
-            }
-        };
-        loadDistributors();
-    }, []);
-
-    return distributors;
 }
 
 export function useRetailers() {
@@ -99,8 +72,31 @@ export function useRetailers() {
         };
         loadRetailers();
     }, []);
-
     return retailers;
+}
+
+export function useRawMaterialSuppliers() {
+    const [rawMaterialSuppliers, setRawMaterialSuppliers] = useState([]);
+
+    useEffect(() => {
+        const loadRawMaterialSuppliers = async () => {
+            const web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
+            const networkId = await web3.eth.net.getId();
+            const networkData = SupplyChainABI.networks[networkId];
+            if (networkData) {
+                const supplyChain = new web3.eth.Contract(SupplyChainABI.abi, networkData.address);
+                const rmsCtr = await supplyChain.methods.rmsCtr().call();
+                const rms = [];
+                for (let i = 0; i < rmsCtr; i++) {
+                    const rawMaterialSupplier = await supplyChain.methods.RMS(i + 1).call();
+                    rms.push(rawMaterialSupplier);
+                }
+                setRawMaterialSuppliers(rms);
+            }
+        };
+        loadRawMaterialSuppliers();
+    }, []);
+    return rawMaterialSuppliers;
 }
 
 function AssignRoles() {
@@ -238,7 +234,6 @@ function AssignRoles() {
         });
     };
 
-    
     const loadWeb3 = async () => {
         if (window.ethereum) {
             window.web3 = new Web3(window.ethereum);
