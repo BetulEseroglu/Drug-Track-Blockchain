@@ -432,34 +432,34 @@ function AssignRoles() {
         event.preventDefault();
     
         if (!verificationSerialNumber || !verificationPassword) {
-            setVerificationMessage('Seri numarası ve şifre gereklidir.');
+            setVerificationMessage('Serial number and password are required.');
             return;
         }
     
         const storedData = localStorage.getItem(verificationSerialNumber);
         if (!storedData) {
-            setVerificationMessage('Geçersiz seri numarası.');
+            setVerificationMessage('Invalid serial number.');
             return;
         }
     
         const { verificationCode, complexKey, attempts } = JSON.parse(storedData);
         if (attempts >= 3) {
-            setVerificationMessage('Şifre giriş hakkı doldu. Ürün doğrulanamadı.');
+            setVerificationMessage('Password attempts exceeded. Product cannot be verified.');
             return;
         }
     
         if (verificationPassword === verificationCode || verificationPassword === complexKey) {
             if (attempts === 0) {
-                setVerificationMessage('Ürün orijinal ve ilk kez doğrulanmıştır.');
+                setVerificationMessage('Product is original and verified for the first time.');
             } else {
-                setVerificationMessage('Bu seri numarası daha önce doğrulandı.');
+                setVerificationMessage('This serial number has been verified before.');
             }
             localStorage.setItem(verificationSerialNumber, JSON.stringify({ verificationCode, complexKey, attempts: attempts + 1 }));
         } else {
-            setVerificationMessage('Geçersiz şifre.');
+            setVerificationMessage('Invalid password.');
             localStorage.setItem(verificationSerialNumber, JSON.stringify({ verificationCode, complexKey, attempts: attempts + 1 }));
         }
-    };
+    };    
 
     const generateQRCodeValue = async () => {
         if (serialNumbers.has(serialNumber)) {
