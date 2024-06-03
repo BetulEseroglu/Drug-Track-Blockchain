@@ -651,7 +651,7 @@ function AssignRoles() {
                 </div>
                 <div className="mb-3">
                 <input className="form-control" type="text" value={serialNumber} onChange={handleSerialNumberChange} placeholder="Serial Number" required />
-                <button type="button" onClick={generateSerialNumber} className="btn btn-outline-secondary btn-sm mt-2">Otomatik Seri No Oluştur</button>
+                <button type="button" onClick={generateSerialNumber} className="btn btn-outline-secondary btn-sm mt-2">Automatically Create Serial Number</button>
                 </div>
 
                 <div className="mb-3">
