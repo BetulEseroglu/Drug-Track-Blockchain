@@ -785,15 +785,15 @@ function AssignRoles() {
                 </tbody>
             </table>
 
-            <h4>Ürün Doğrula:</h4>
+            <h4>Verify Product:</h4>
             <form onSubmit={handleVerifyProduct} className="mb-4">
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={(e) => setVerificationSerialNumber(e.target.value)} placeholder="Seri Numarası" required />
+                    <input className="form-control" type="text" onChange={(e) => setVerificationSerialNumber(e.target.value)} placeholder="Serial Number" required />
                 </div>
                 <div className="mb-3">
-                    <input className="form-control" type="text" onChange={(e) => setVerificationPassword(e.target.value)} placeholder="Şifre" required />
+                    <input className="form-control" type="text" onChange={(e) => setVerificationPassword(e.target.value)} placeholder="Password" required />
                 </div>
-                <button className="btn btn-outline-success btn-sm" type="submit">Kayıt</button>
+                <button className="btn btn-outline-success btn-sm" type="submit">Submit</button>
                 {verificationMessage && <div className="mt-3"><b>{verificationMessage}</b></div>}
             </form>
 
